@@ -2,6 +2,7 @@
 
 # 1. Description
 Example project to show peripheral configuration and use.
-- fromScratch : with startup code in c and imported lib
+- fromScratch : startup coded in c.
+- board_features : startup.c, iwatchdog, gpio EXTI, lpuart (cli), stream, console (debug ITM)
 - ... : to come.
 

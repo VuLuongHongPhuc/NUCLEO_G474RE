@@ -6,18 +6,23 @@
 
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
 #include <stdio.h>
 
 #include "stm32g474xx.h"
+#include "stm32g4xx_ll_rcc.h"
+
+#include "main.h"
 #include "Initialize.h"
 #include "system.h"
 
 //C:\Users\admin\STM32Cube\Repository\STM32Cube_FW_G4_V1.5.1
 
+
+static LL_RCC_ClocksTypeDef clock_ref = {0};
+
 __STATIC_INLINE uint32_t GetElapseTime(uint32_t tick, uint32_t value)
 {
-	if (tick > value)
+	if (tick >= value)
 	{
 		return (uint32_t)(tick - value);
 	}
@@ -29,44 +34,47 @@ __STATIC_INLINE uint32_t GetElapseTime(uint32_t tick, uint32_t value)
 
 int main(void)
 {
-	uint32_t time;
+	uint32_t last_time;
 	uint32_t time_elapse;
 
 	InitSystem();
 	InitializeGPIO();
 
-	time = GetSysTick();
+	/* get clocks frequencies */
+	LL_RCC_GetSystemClocksFreq(&clock_ref);
+
+	last_time = GetSysTick();
 
 	while (1)
 	{
-		//time_elapse = GetSysTick() - time;
-		time_elapse = GetElapseTime(GetSysTick(), time);
+		time_elapse = GetSysTick() - last_time;
+		//time_elapse = GetElapseTime(GetSysTick(), last_time);
 
 		if (time_elapse > 1000)
 		{
-			time = GetSysTick();
+			last_time = GetSysTick();
 
 			/* Toggle BUILT-IN LED */
 			GPIOA->ODR ^= (1UL << 5);
 
-#if USER_BUTTON_PRESS
-			/* USER button press */
-			if (GPIOC->IDR & GPIO_IDR_ID13_Msk)
-			{
-				// set to 1
-				GPIOA->BSRR = GPIO_BSRR_BS5;
-			}
-			else
-			{
-				// reset to 0
-				GPIOA->BSRR = GPIO_BSRR_BR5;
-			}
-#endif
 			time_elapse = GetSysCoreClockCount();
 
 			printf("%d\r\n", (int)time_elapse);
 		}
 
+#if USER_BUTTON_PRESS
+		/* USER button press */
+		if (GPIOC->IDR & GPIO_IDR_ID13_Msk)
+		{
+			// set to 1
+			GPIOA->BSRR = GPIO_BSRR_BS5;
+		}
+		else
+		{
+			// reset to 0
+			GPIOA->BSRR = GPIO_BSRR_BR5;
+		}
+#endif
 	}// end while(1)
 }
 
