@@ -6,3 +6,6 @@ Example project to show peripheral configuration and use.
 - board_features : startup.c, iwatchdog, gpio EXTI, lpuart (cli), stream, console (debug ITM)
 - ... : to come.
 
+# 2. Common files
+All the project on this repository use the same Core files.<br>
+Copy all file on root/Core to project/Core before starting the project and build.
