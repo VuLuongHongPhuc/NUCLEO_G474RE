@@ -43,10 +43,10 @@ HAL_TickFreqTypeDef uwTickFreq = HAL_TICK_FREQ_DEFAULT;
 
 
 /* Private prototypes -----------------------------------------------------------*/
-static void InitSystemClock();
-static void InitSysTick();
+void InitSystemClock();
+void InitSysTick();
 static inline void EnableCoreSysClock();
-static void InitMemory(void);
+
 
 
 
@@ -67,21 +67,19 @@ void __libc_init_array(void)
 
 
 
-void SYSTEM_Initialize()
+void InitSystem()
 {
 	InitSystemClock();
 
 	/* Set Interrupt Group Priority */
 	NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
 
-	InitMemory();
-
 	InitSysTick();
 }
 
 
 
-static void InitSystemClock(void)
+void InitSystemClock(void)
 {
 
 	/*
@@ -98,56 +96,40 @@ static void InitSystemClock(void)
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
 
-
-    /* p.258 UCPD1_DBDIS : Disable the internal Pull-Up in Dead Battery pins of UCPD peripheral */
+    /** Disable the internal Pull-Up in Dead Battery pins of UCPD peripheral */
     LL_PWR_DisableUCPDDeadBattery();
 
-    /* 4WS (Wait State) good for all config */
     LL_FLASH_SetLatency(LL_FLASH_LATENCY_4);
-
-    /* Check that the new number of wait states is taken into account */
-    while(LL_FLASH_GetLatency() != LL_FLASH_LATENCY_4);
-
-    /* Recommended R1MODE = 0 if SYSCLK < 170MHz */
-    if (PWR->CR5 & PWR_CR5_R1MODE)
+    while(LL_FLASH_GetLatency() != LL_FLASH_LATENCY_4)
     {
-    	/* Switch from normal to boost mode step */
-
-    	LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_2);
-    	__asm__("NOP");
-
-    	LL_PWR_EnableRange1BoostMode();
     }
-
-
-    /*
-     * Bit 16 HSEON: HSE clock enable
-     * Set and cleared by software. Cleared by hardware to stop the HSE oscillator when entering Stop, Standby or Shutdown
-     * mode. This bit cannot be reset if the HSE oscillator is used directly or indirectly as the system clock...?
-     * 0: HSE oscillator OFF
-     * 1: HSE oscillator ON
-     * */
+    LL_PWR_EnableRange1BoostMode();
     LL_RCC_HSE_Enable();
     /* Wait till HSE is ready */
-    while(LL_RCC_HSE_IsReady() != 1);
-
+    while(LL_RCC_HSE_IsReady() != 1)
+    {
+    }
 
     LL_RCC_HSI_Enable();
     /* Wait till HSI is ready */
-    while(LL_RCC_HSI_IsReady() != 1);
+    while(LL_RCC_HSI_IsReady() != 1)
+    {
+    }
     LL_RCC_HSI_SetCalibTrimming(64);
 
     LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLLM_DIV_3, 25, LL_RCC_PLLR_DIV_2);
     LL_RCC_PLL_EnableDomain_SYS();
     LL_RCC_PLL_Enable();
     /* Wait till PLL is ready */
-    while(LL_RCC_PLL_IsReady() != 1);
-
+    while(LL_RCC_PLL_IsReady() != 1)
+    {
+    }
 
     LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLL);
     /* Wait till System clock is ready */
-    while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL);
-
+    while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL)
+    {
+    }
 
     /* Set AHB prescaler*/
     LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
@@ -160,17 +142,18 @@ static void InitSystemClock(void)
 
 
 
-/**
-* @brief Configure SysTick to 1 millisecond
-*/
-static void InitSysTick()
+
+void InitSysTick()
 {
+	/*
+	 * SysTick set to 1 ms
+	 * */
+
 	uint32_t TickPriority = TICK_INT_PRIORITY;
 	uint32_t tick_time = SystemCoreClock / (1000U / uwTickFreq);
 
 
-	if (SysTick_Config(tick_time) > 0U)
-		return;
+	if (SysTick_Config(tick_time) > 0U) { return; }
 
 
 	// duplicate of SysTick_Config to set uwTickPrio
@@ -183,26 +166,21 @@ static void InitSysTick()
 
 		uwTickPrio = TickPriority;
 	}
+
 }
 
-/**
- * @brief Initialize I-Cache, D-Cache, Prefetch
- */
-static void InitMemory(void)
+
+
+
+
+void SysTick_Handler(void)
 {
-	/* FLASH->ACR : Reset value: 0x0004 0601 = 0100 0000 0110 0000 0001 */
-
-	/* FLASH_ARC.ICEN : default enable */
-	//LL_FLASH_EnableInstCache();
-
-	/* FLASH_ARC.DCEN : default enable */
-	//LL_FLASH_EnableDataCache();
-
-	/* FLASH_ARC.PRFTEN : default disable */
-	//LL_FLASH_DisablePrefetch();
+	uwTick += uwTickFreq;
 }
 
-static inline void EnableCoreSysClock()
+
+
+inline void EnableCoreSysClock()
 {
 	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
 	DWT->CYCCNT = 0;
@@ -212,11 +190,6 @@ static inline void EnableCoreSysClock()
 inline uint32_t GetSysCoreClockCount()
 {
 	return DWT->CYCCNT;
-}
-
-void SysTick_Handler(void)
-{
-	uwTick += uwTickFreq;
 }
 
 /*EOF*/

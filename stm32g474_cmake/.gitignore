@@ -1,0 +1,10 @@
+
+# ignore file and folder
+Core/
+bin/CMakeFiles/
+bin/.ninja_deps
+bin/.ninja_log
+bin/build.ninja
+bin/cmake_install.cmake
+bin/CMakeCache.txt
+.vscode/
