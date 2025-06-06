@@ -1,8 +1,0 @@
-﻿  ConvertString.cpp
-  Manager.cpp
-  SerialCom.cpp
-  SRecord.cpp
-  test.cpp
-  Generating Code...
-  LINK : D:\DEV\STM32\workspace_1.13.2\Nouveau dossier\Flash\\bin\x64\Debug\FlashBoot.exe not found or not built by the last incremental link; performing full link
-  test.vcxproj -> D:\DEV\STM32\workspace_1.13.2\Nouveau dossier\Flash\bin\x64\Debug\FlashBoot.exe
