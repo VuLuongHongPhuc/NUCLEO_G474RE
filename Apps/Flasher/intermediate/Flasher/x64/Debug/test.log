@@ -1,0 +1,7 @@
+﻿  ConvertString.cpp
+  Manager.cpp
+  SerialCom.cpp
+  SRecord.cpp
+  test.cpp
+  Generating Code...
+  test.vcxproj -> D:\DEV\STM32\workspace_1.13.2\Nouveau dossier\Flash\bin\x64\Debug\Flasher.exe

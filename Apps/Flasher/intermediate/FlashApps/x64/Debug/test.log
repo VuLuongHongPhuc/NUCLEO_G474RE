@@ -1,0 +1,6 @@
+﻿  ConvertString.cpp
+  SerialCom.cpp
+  SRecord.cpp
+  test.cpp
+  Generating Code...
+  test.vcxproj -> D:\DEV\STM32\workspace_1.13.2\NUCLEO_G474RE\Apps\Flasher\bin\x64\Debug\FlashApps.exe
