@@ -8,7 +8,7 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/Buildtools.cmake)
 
 # Create a project named
-project(STM32_G474)
+project(STM32_G474RET)
 set(EXECUTABLE ${PROJECT_NAME}.elf)
 set(LINKER_FILE ${CMAKE_SOURCE_DIR}/STM32G474RETX.ld)
 
@@ -22,53 +22,39 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 message(STATUS "CMAKE_TOOLCHAIN_FILE is: ${CMAKE_TOOLCHAIN_FILE}")
 
+# Add subdirectories - order matters
+add_subdirectory(LL)
+add_subdirectory(Utils)
+add_subdirectory(Interfaces)
+
 # Add the source file to the project
 # and set the variable PROJECT_SOURCES to this source file
 set(PROJECT_SOURCES
-        Core/system_stm32g4xx.c
-        Core/stm32g4xx_ll_utils.c
-        Core/stm32g4xx_ll_usart.c
-        Core/stm32g4xx_ll_tim.c
-        Core/stm32g4xx_ll_spi.c
-        Core/stm32g4xx_ll_rtc.c
-        Core/stm32g4xx_ll_rng.c
-        Core/stm32g4xx_ll_rcc.c
-        Core/stm32g4xx_ll_pwr.c
-        Core/stm32g4xx_ll_opamp.c
-        Core/stm32g4xx_ll_lpuart.c
-        Core/stm32g4xx_ll_lptim.c
-        Core/stm32g4xx_ll_i2c.c
-        Core/stm32g4xx_ll_hrtim.c
-        Core/stm32g4xx_ll_gpio.c
-        Core/stm32g4xx_ll_exti.c
-        Core/stm32g4xx_ll_dma.c
-        Core/stm32g4xx_ll_dac.c
-        Core/stm32g4xx_ll_crs.c
-        Core/stm32g4xx_ll_crc.c
-        Core/stm32g4xx_ll_cordic.c
-        Core/stm32g4xx_ll_comp.c
-        Core/stm32g4xx_ll_adc.c
-        src/main.c
-        src/stm32g4xx_startup.c
-        src/Initialize.c
-        src/syscalls.c
-        src/system.c
+        ${UTILS_SRC}
+        ${INTERFACES_SRC}
+        Core/main.c
+        Core/stm32g4xx_startup.c
+        Core/Initialize.c
+        Core/syscalls.c
+        Core/system.c
     )
 
-# Add an executable called Tutorial to the project
+# Add an executable to the project
 add_executable(${EXECUTABLE} ${PROJECT_SOURCES})
+target_link_libraries(${EXECUTABLE} PRIVATE lldlib)
 
 # List of compiler defines, prefix with -D compiler option
 target_compile_definitions(${EXECUTABLE} PRIVATE
         -DSTM32G474xx
         -DUSE_FULL_LL_DRIVER
+        -DDEBUG
         )
 
-# List of includ directories
+# List of include directories
 target_include_directories(${EXECUTABLE} PRIVATE
-        src
-        inc
-        Core
+        ${CMAKE_SOURCE_DIR}/Core
+        ${CMAKE_SOURCE_DIR}/Interfaces
+        ${CMAKE_SOURCE_DIR}/Utils
         )
 
 # Set ASM compiler options
@@ -76,7 +62,7 @@ target_compile_options(${EXECUTABLE} PRIVATE
         $<$<COMPILE_LANGUAGE:ASM>:-mcpu=cortex-m4>
         $<$<COMPILE_LANGUAGE:ASM>:-mlittle-endian>
         $<$<COMPILE_LANGUAGE:ASM>:-g3>
-        $<$<COMPILE_LANGUAGE:ASM>:-DDEBUG>
+#        $<$<COMPILE_LANGUAGE:ASM>:-DDEBUG>
         $<$<COMPILE_LANGUAGE:ASM>:-x>
         $<$<COMPILE_LANGUAGE:ASM>:-x assembler-with-cpp>
         $<$<COMPILE_LANGUAGE:ASM>:--specs=nano.specs>
@@ -88,27 +74,28 @@ target_compile_options(${EXECUTABLE} PRIVATE
 # Compiler options for C language only
 target_compile_options(${EXECUTABLE} PRIVATE
         $<$<COMPILE_LANGUAGE:C>:-mcpu=cortex-m4>
+        $<$<COMPILE_LANGUAGE:C>:-mlittle-endian>
         $<$<COMPILE_LANGUAGE:C>:-g3>
-        $<$<COMPILE_LANGUAGE:C>:-DDEBUG>
+#        $<$<COMPILE_LANGUAGE:C>:-DDEBUG>
         $<$<COMPILE_LANGUAGE:C>:-c>
         $<$<COMPILE_LANGUAGE:C>:-O0>
         $<$<COMPILE_LANGUAGE:C>:-ffunction-sections>
         $<$<COMPILE_LANGUAGE:C>:-fdata-sections>
         $<$<COMPILE_LANGUAGE:C>:-Wall>
         $<$<COMPILE_LANGUAGE:C>:-fstack-usage>
-        #$<$<COMPILE_LANGUAGE:C>:-fcyclomatic-complexity>
+#        $<$<COMPILE_LANGUAGE:C>:-fcyclomatic-complexity>
         $<$<COMPILE_LANGUAGE:C>:--specs=nano.specs>
         $<$<COMPILE_LANGUAGE:C>:-mfpu=fpv4-sp-d16>
         $<$<COMPILE_LANGUAGE:C>:-mfloat-abi=hard>
         $<$<COMPILE_LANGUAGE:C>:-mthumb>
-        $<$<COMPILE_LANGUAGE:C>:-mlittle-endian>
 )
 
 # Compiler options for C++ language only
 target_compile_options(${EXECUTABLE} PRIVATE
         $<$<COMPILE_LANGUAGE:CXX>:-mcpu=cortex-m4>
+        $<$<COMPILE_LANGUAGE:CXX>:-mlittle-endian>
         $<$<COMPILE_LANGUAGE:CXX>:-g3>
-        $<$<COMPILE_LANGUAGE:CXX>:-DDEBUG>
+#        $<$<COMPILE_LANGUAGE:CXX>:-DDEBUG>
         $<$<COMPILE_LANGUAGE:CXX>:-c>
         $<$<COMPILE_LANGUAGE:CXX>:-O0>
         $<$<COMPILE_LANGUAGE:CXX>:-ffunction-sections>
@@ -119,30 +106,42 @@ target_compile_options(${EXECUTABLE} PRIVATE
         $<$<COMPILE_LANGUAGE:CXX>:-mfpu=fpv4-sp-d16>
         $<$<COMPILE_LANGUAGE:CXX>:-mfloat-abi=hard>
         $<$<COMPILE_LANGUAGE:CXX>:-mthumb>
-        $<$<COMPILE_LANGUAGE:CXX>:-mlittle-endian>
 )
 
 # Linker options
+# Explanation of some options:
+# -u 
+# _printf_float -> enable float support in printf (functionality increases code size)
+#                     use of this option requires --specs=rdimon.specs
+#                     call syscalls.c to provide semihosting support functions
+# --specs=rdimon.specs -> enable semihosting support
+# --specs=nano.specs -> use newlib-nano (smaller C library implementation)
+# --specs=nosys.specs -> use minimal system calls (no OS)
+# -Wl,--gc-sections -> remove unused sections
+# -nostdlib -> do not use standard libraries
+# -static -> do not use shared libraries
+# -Wl,--start-group ... -Wl,--end-group -> resolve circular dependencies between libraries
+# -Xlinker -print-memory-usage -> print memory usage after linking
 target_link_options(${EXECUTABLE} PRIVATE
-        -T${LINKER_FILE}
         -mcpu=cortex-m4
+        -T${LINKER_FILE}
         -mlittle-endian
-        -mthumb
-        -mfloat-abi=hard
-        --specs=rdimon.specs
-        --specs=nano.specs
         --specs=nosys.specs
+        -Wl,-Map=${PROJECT_NAME}.map,--cref
+        -Wl,--gc-sections
         -nostdlib
         -static
+        --specs=rdimon.specs
+        --specs=nano.specs
         -mfpu=fpv4-sp-d16
+        -mfloat-abi=hard
         -u
         _printf_float
+        -mthumb
         -Wl,--start-group
         -lc
         -lm
         -Wl,--end-group
-        -Wl,-Map=${PROJECT_NAME}.map,--cref
-        -Wl,--gc-sections
         -Xlinker -print-memory-usage -Xlinker
         )
 

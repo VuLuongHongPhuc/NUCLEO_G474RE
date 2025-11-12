@@ -1,7 +1,7 @@
 
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR ARM)
-set(ARM_TOOLCHAIN_DIR "C:/arm-gnu-toolchain-14.2.rel1-mingw-w64-x86_64-arm-none-eabi/bin")
+set(ARM_TOOLCHAIN_DIR "C:/arm_toolchain/bin")
 set(BINUTILS_PATH ${ARM_TOOLCHAIN_DIR}) 
 set(TOOLCHAIN_PREFIX ${ARM_TOOLCHAIN_DIR}/arm-none-eabi-)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)

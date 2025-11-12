@@ -1,5 +1,0 @@
-
-# ignore file and folder
-Debug/
-Core/*.*
-fromScratch Debug.launch

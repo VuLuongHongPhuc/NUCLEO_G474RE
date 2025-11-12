@@ -8,17 +8,26 @@
 /* Includes ------------------------------------------------------------------*/
 #include <stdio.h>
 
-#include "../Core/stm32g474xx.h"
-#include "../Core/stm32g4xx_ll_rcc.h"
+#include <stm32g474xx.h>
+#include <stm32g4xx_ll_rcc.h>
+#include <stm32g4xx_ll_gpio.h>
+#include <stm32g4xx_ll_iwdg.h>
 
 #include "main.h"
 #include "Initialize.h"
 #include "system.h"
+#include "gpio.h"
+#include "lpuart1.h"
+#include "crc.h"
 
 //C:\Users\admin\STM32Cube\Repository\STM32Cube_FW_G4_V1.5.1
 
-
-static LL_RCC_ClocksTypeDef clock_ref = {0};
+static uint32_t tab[] = {
+	0x12345678,
+	0x3456789A,
+	0x56789ABC,
+	0x789ABCDE,
+};
 
 __STATIC_INLINE uint32_t GetElapseTime(uint32_t tick, uint32_t value)
 {
@@ -34,14 +43,17 @@ __STATIC_INLINE uint32_t GetElapseTime(uint32_t tick, uint32_t value)
 
 int main(void)
 {
+	static LL_RCC_ClocksTypeDef clock_ref = {0};
+
 	uint32_t last_time;
 	uint32_t time_elapse;
 
-	InitSystem();
-	InitializeGPIO();
+	GLOBAL_Initialize();
 
 	/* get clocks frequencies */
 	LL_RCC_GetSystemClocksFreq(&clock_ref);
+
+	printf("System started.\r\n");
 
 	last_time = GetSysTick();
 
@@ -55,27 +67,34 @@ int main(void)
 			last_time = GetSysTick();
 
 			/* Toggle BUILT-IN LED */
-			GPIOA->ODR ^= (1UL << 5);
+			LL_GPIO_TogglePin(BUILT_IN_LED_Port, BUILT_IN_LED_Pin);
 
+			#if 0
 			time_elapse = GetSysCoreClockCount();
-
 			printf("%d\r\n", (int)time_elapse);
+			#endif
+
+			#if 0
+			//LPUART1_WriteOneData('A');
+			uint8_t msg[] = "Hello from LPUART1!\r\n";
+			LPUART1_Write( msg, sizeof(msg)/sizeof(msg[0]));
+
+			uint16_t nLu = LPUART1_Read(msg, 1);
+			if (nLu)
+			{
+				printf("%c\r\n", msg[0]);
+			}
+			#endif
+
+			// Refresh watchdog
+			//LL_IWDG_ReloadCounter(IWDG);
+
+
+			uint32_t crc = CRC_Compute( (uint32_t*)tab, 1);
+			printf("%x\r\n", (int)crc);
 		}
 
-#if USER_BUTTON_PRESS
-		/* USER button press */
-		if (GPIOC->IDR & GPIO_IDR_ID13_Msk)
-		{
-			// set to 1
-			GPIOA->BSRR = GPIO_BSRR_BS5;
-		}
-		else
-		{
-			// reset to 0
-			GPIOA->BSRR = GPIO_BSRR_BR5;
-		}
-#endif
-	}// end while(1)
+	}// while(1)
 }
 
 
