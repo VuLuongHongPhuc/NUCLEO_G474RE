@@ -1,11 +1,9 @@
 # Example for NUCLEO-G474RE
 
 # 1. Description
-Example project to show peripheral configuration and use.
-- fromScratch : startup coded in c.
-- board_features : startup.c, iwatchdog, gpio EXTI, lpuart (cli), stream, console (debug ITM)
-- ... : to come.
+Example project to test configuration and use:
+- cmake project configuration.
+- startup coded in c.
 
 # 2. Common files
-All the project on this repository use the same Core files.<br>
-Copy all file on root/Core to project/Core before starting the project and build.
+Files in LL folder come from STM32Cube_FW_G4_V1.5.1.<br>

@@ -1,8 +1,9 @@
-/*
- * watchdog.c
- *
- *  Created on: Dec 12, 2024
- *      Author: admin
+/**
+ * @file watchdog.c
+ * @brief Watchdog Interface
+ * 
+ * @author Phuc VU
+ * @date Dec 12, 2024
  */
 
 #include <stm32g4xx_ll_iwdg.h>

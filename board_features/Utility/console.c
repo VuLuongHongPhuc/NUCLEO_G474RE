@@ -6,8 +6,8 @@
  */
 
 
-#include "stm32g474xx.h"
 #include "console.h"
+#include "../LL/stm32g474xx.h"
 
 #define MAX_STRING_SIZE		128
 

@@ -7,10 +7,9 @@
 
 #include "../Board/gpio.h"
 
-#include <stm32g4xx_ll_gpio.h>
-#include <stm32g4xx_ll_bus.h>
-
 #include "console.h"
+#include "../LL/stm32g4xx_ll_bus.h"
+#include "../LL/stm32g4xx_ll_gpio.h"
 
 
 

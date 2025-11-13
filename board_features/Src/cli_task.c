@@ -5,12 +5,11 @@
  *      Author: admin
  */
 
-#include <stm32g4xx_ll_gpio.h>
-
 #include "cli_task.h"
 #include "stream.h"
 #include "gpio.h"
 #include "lpuart1.h"
+#include "../LL/stm32g4xx_ll_gpio.h"
 
 
 /*** LOCAL DEFINE *****************************************************/

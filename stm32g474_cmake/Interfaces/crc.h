@@ -30,9 +30,11 @@ extern "C" {
  */
 void CRC_Initialize(void);
 
-uint32_t CRC_Compute(uint32_t * pData, uint32_t length);
+uint32_t CRC_Compute(uint8_t const * const pData, uint32_t length);
 
 void CRC_Deinitialize(void);
+
+void CRC_Test(void);
 
 #ifdef __cplusplus
 }

@@ -8,6 +8,7 @@
  */
 
 /********************************* Includes ***************************************/
+#include <stdio.h>
 #include <stm32g4xx.h>
 #include <stm32g4xx_ll_usart.h>
 #include <stm32g4xx_ll_gpio.h>
@@ -344,6 +345,20 @@ void LPUART1_IRQHandler(void)
 	}
 }
 
+void LPUART1_TestTransmit(void)
+{
+	uint8_t msg[] = "LPUART1 Test Transmit\r\n";
+	LPUART1_Write( msg, sizeof(msg)/sizeof(msg[0]));
+}
 
+void LPUART1_TestReceive(void)
+{
+	uint8_t msg[] = {0};
+	uint16_t nLu = LPUART1_Read(msg, 1);
+	if (nLu)
+	{
+		printf("LPUART1 receive: 0x%x\r\n", msg[0]);
+	}
+}
 
 /*EOF*/

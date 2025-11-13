@@ -1,11 +1,11 @@
-/*
- * lpuart1.h
- *
- *  Created on: Dec 7, 2024
- *      Author: admin
+/**
+ * @file lpuart1.h
+ * @brief LPUART1 Interface
+ * @details Connected to debugger ST-LINK Virtual COM Port.
+ * 
+ * @author Phuc VU
+ * @date Dec 7, 2024
  */
-
-
 
 #ifndef SRC_LPUART1_H_
 #define SRC_LPUART1_H_
@@ -68,6 +68,10 @@ bool LPUART1_Write( uint8_t const * const pBuf, uint16_t length);
  * @retval Number of data actually read
  */
 uint16_t LPUART1_Read(uint8_t * pBuf, uint8_t length);
+
+
+void LPUART1_TestTransmit(void);
+void LPUART1_TestReceive(void);
 
 /********************************* Inline implementations *************************/
 

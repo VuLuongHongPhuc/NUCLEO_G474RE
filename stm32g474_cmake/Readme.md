@@ -1,5 +1,5 @@
 # Project build
-
+Board NUCLEO-G474RE
 ## build tool
 - cmake v3.23
 - arm compiler 14.2

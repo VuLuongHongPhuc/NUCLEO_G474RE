@@ -1,15 +1,16 @@
-/*
- * gpio.c
- *
- *  Created on: Dec 7, 2024
- *      Author: admin
+/**
+ * @file gpio.c
+ * @brief GPIO Interface
+ * 
+ * @author Phuc VU
+ * @date Dec 7, 2024
  */
 
 
 /********************************* Includes ***************************************/
-//#include <stdio.h>
+#include <stdio.h>
 
-//#include <stm32g4xx_ll_gpio.h>
+#include <stm32g474xx.h>
 #include <stm32g4xx_ll_bus.h>
 
 #include "gpio.h"
@@ -160,11 +161,11 @@ __WEAK void UserButtonCallback(void)
 {
 	if (GPIOC->IDR & (1UL << USER_BUTTON_SHIFT_REG))
 	{
-		//printf("ON\r\n");
+		printf("ON\r\n");
 	}
 	else
 	{
-		//printf("OFF\r\n");
+		printf("OFF\r\n");
 	}
 
 #if 0

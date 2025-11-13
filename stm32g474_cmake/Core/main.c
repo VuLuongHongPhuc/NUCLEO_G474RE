@@ -1,7 +1,9 @@
 
 
 /*
- * FW_G4_V1.5.1
+ * STM32Cube_FW_G4_V1.5.1
+ * C:\Users\xxx\STM32Cube\Repository\STM32Cube_FW_G4_V1.5.1\Drivers\STM32G4xx_HAL_Driver\Src
+ * C:\Users\xxx\STM32Cube\Repository\STM32Cube_FW_G4_V1.5.1\Drivers\STM32G4xx_HAL_Driver\Inc
  * */
 
 
@@ -18,16 +20,7 @@
 #include "system.h"
 #include "gpio.h"
 #include "lpuart1.h"
-#include "crc.h"
 
-//C:\Users\admin\STM32Cube\Repository\STM32Cube_FW_G4_V1.5.1
-
-static uint32_t tab[] = {
-	0x12345678,
-	0x3456789A,
-	0x56789ABC,
-	0x789ABCDE,
-};
 
 __STATIC_INLINE uint32_t GetElapseTime(uint32_t tick, uint32_t value)
 {
@@ -50,10 +43,13 @@ int main(void)
 
 	GLOBAL_Initialize();
 
-	/* get clocks frequencies */
+	/* DEBUG - get clocks frequencies */
 	LL_RCC_GetSystemClocksFreq(&clock_ref);
-
-	printf("System started.\r\n");
+	printf("SYSTEM frequencies:\r\n");
+	printf(" - SYSCLK: %d\r\n", (int)clock_ref.SYSCLK_Frequency);
+	printf(" - HCLK  : %d\r\n", (int)clock_ref.HCLK_Frequency);
+	printf(" - PCLK1 : %d\r\n", (int)clock_ref.PCLK1_Frequency);
+	printf(" - PCLK2 : %d\r\n", (int)clock_ref.PCLK2_Frequency);
 
 	last_time = GetSysTick();
 
@@ -75,23 +71,10 @@ int main(void)
 			#endif
 
 			#if 0
-			//LPUART1_WriteOneData('A');
-			uint8_t msg[] = "Hello from LPUART1!\r\n";
-			LPUART1_Write( msg, sizeof(msg)/sizeof(msg[0]));
-
-			uint16_t nLu = LPUART1_Read(msg, 1);
-			if (nLu)
-			{
-				printf("%c\r\n", msg[0]);
-			}
+			LPUART1_TestTransmit();
+			LPUART1_TestReceive();
 			#endif
-
-			// Refresh watchdog
-			//LL_IWDG_ReloadCounter(IWDG);
-
-
-			uint32_t crc = CRC_Compute( (uint32_t*)tab, 1);
-			printf("%x\r\n", (int)crc);
+			
 		}
 
 	}// while(1)

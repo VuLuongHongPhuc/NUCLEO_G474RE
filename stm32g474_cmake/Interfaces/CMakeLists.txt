@@ -1,10 +1,9 @@
 cmake_minimum_required(VERSION 3.23.1)
 
+file(GLOB_RECURSE INTERFACE_C_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
+
 set(INTERFACES_SRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/gpio.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/lpuart1.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/watchdog.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/crc.c
+        ${INTERFACE_C_SOURCES}
         PARENT_SCOPE
 )
 

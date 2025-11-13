@@ -8,6 +8,7 @@
 #ifndef UTILITY_CONSOLE_H_
 #define UTILITY_CONSOLE_H_
 
+#include <stdint.h>
 
 #ifdef DEBUG
 	#define DEBUG_Write(ptr)			CONSOLE_Write(ptr)

@@ -8,11 +8,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include <stm32g474xx.h>
-#include <stm32g4xx_ll_iwdg.h>
-#include <stm32g4xx_ll_usart.h>
-#include <stm32g4xx_ll_gpio.h>
-
 #include "main.h"
 #include "Initialize.h"
 #include "system.h"
@@ -20,6 +15,10 @@
 #include "cli_task.h"
 #include "gpio.h"
 #include "console.h"
+#include "../LL/stm32g474xx.h"
+#include "../LL/stm32g4xx_ll_gpio.h"
+#include "../LL/stm32g4xx_ll_iwdg.h"
+#include "../LL/stm32g4xx_ll_usart.h"
 
 
 int main(void)

@@ -8,13 +8,13 @@
 
 /* Includes -----------------------------------------------------------------*/
 #include <stdint.h>
-#include "stm32g474xx.h"
-#include "stm32g4xx_ll_bus.h"
-#include "stm32g4xx_ll_system.h"
-#include "stm32g4xx_ll_pwr.h"
-#include "stm32g4xx_ll_rcc.h"
-#include "stm32g4xx_ll_utils.h"
 #include "system.h"
+#include "../LL/stm32g474xx.h"
+#include "../LL/stm32g4xx_ll_bus.h"
+#include "../LL/stm32g4xx_ll_pwr.h"
+#include "../LL/stm32g4xx_ll_rcc.h"
+#include "../LL/stm32g4xx_ll_system.h"
+#include "../LL/stm32g4xx_ll_utils.h"
 
 
 

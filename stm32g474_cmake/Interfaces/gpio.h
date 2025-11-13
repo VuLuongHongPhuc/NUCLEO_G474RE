@@ -1,3 +1,12 @@
+/**
+ * @file gpio.h
+ * @brief GPIO Interface
+ * 
+ * @author Phuc VU
+ * @date Dec 7, 2024
+ */
+
+
 /*
  * LED_BUILTIN PA5 D13 pin.19
  * BLUE BUTTON PC13 pin.2
@@ -37,8 +46,7 @@
  * p.351 GPIO
  * */
 
- /********************************* Includes ***************************************/
-//#include <stm32g474xx.h>
+/********************************* Includes ***************************************/
 #include <stm32g4xx_ll_gpio.h>
 
 #ifdef __cplusplus
@@ -48,8 +56,7 @@ extern "C" {
 
 /********************************* Macros *****************************************/
 
-/**
- * stm32g4xx_ll_gpio.h
+/* GPIO operations
  * 
  * Toggle output
  * GPIOA->ODR ^= (1UL << LL_GPIO_PIN_5);

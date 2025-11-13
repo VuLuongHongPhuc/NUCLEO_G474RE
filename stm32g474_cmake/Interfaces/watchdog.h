@@ -1,8 +1,9 @@
-/*
- * watchdog.h
- *
- *  Created on: Dec 12, 2024
- *      Author: admin
+/**
+ * @file watchdog.h
+ * @brief Watchdog Interface
+ * 
+ * @author Phuc VU
+ * @date Dec 12, 2024
  */
 
 #ifndef BOARD_WATCHDOG_H_
@@ -17,6 +18,7 @@ extern "C" {
 
 
 /********************************* Macros *****************************************/
+
 /********************************* Data structure *********************************/
 
 /********************************* Inline prototypes ******************************/

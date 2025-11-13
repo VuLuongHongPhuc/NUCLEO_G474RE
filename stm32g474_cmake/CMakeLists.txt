@@ -23,7 +23,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 message(STATUS "CMAKE_TOOLCHAIN_FILE is: ${CMAKE_TOOLCHAIN_FILE}")
 
 # Add subdirectories - order matters
-add_subdirectory(LL)
+add_subdirectory(stm32_ll)
 add_subdirectory(Utils)
 add_subdirectory(Interfaces)
 

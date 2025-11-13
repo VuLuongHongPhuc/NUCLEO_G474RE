@@ -8,11 +8,11 @@
 
 #include "../Board/lpuart1.h"
 
-#include <stm32g4xx.h>
-#include <stm32g4xx_ll_usart.h>
-#include <stm32g4xx_ll_gpio.h>
-#include <stm32g4xx_ll_rcc.h>
-#include <stm32g4xx_ll_bus.h>
+#include "../LL/stm32g4xx.h"
+#include "../LL/stm32g4xx_ll_bus.h"
+#include "../LL/stm32g4xx_ll_gpio.h"
+#include "../LL/stm32g4xx_ll_rcc.h"
+#include "../LL/stm32g4xx_ll_usart.h"
 
 
 
@@ -290,8 +290,8 @@ static inline void WriteFromISR(void)
 
 static inline void FillRxStreamFromISR(void)
 {
-	uint8_t c = LPUART1->RDR;
-	STREAM_Write(&RxStream, &c, 1);
+	uint32_t c = LPUART1->RDR;
+	STREAM_Write(&RxStream, (uint8_t*)&c, 1);
 }
 
 void LPUART1_Read(uint8_t* buffer, uint8_t length, uint8_t* read)

@@ -8,6 +8,7 @@
 #ifndef INC_SYSTEM_H_
 #define INC_SYSTEM_H_
 
+#include <stdint.h>
 
 #define BOARD_SYSTEM_CORE_CLOCK          (100000000)     /* 100 Mhz */
 
