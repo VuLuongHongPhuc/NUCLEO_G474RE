@@ -66,6 +66,7 @@ int main(void)
 			LL_GPIO_TogglePin(BUILT_IN_LED_Port, BUILT_IN_LED_Pin);
 
 			#if 0
+			/* tick at 100_000_000 */
 			time_elapse = GetSysCoreClockCount();
 			printf("%d\r\n", (int)time_elapse);
 			#endif
@@ -77,7 +78,7 @@ int main(void)
 			
 		}
 
-	}// while(1)
+	}// END : while(1)
 }
 
 
