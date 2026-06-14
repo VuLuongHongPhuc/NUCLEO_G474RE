@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "lpuart1.h"
 #include "watchdog.h"
+#include "usart1.h"
 
 
 /********************************* Inline prototypes ******************************/
@@ -25,6 +26,7 @@ void GLOBAL_Initialize(void)
 	SYSTEM_Initialize();
 	GPIO_Initialize();
 	LPUART1_Initialize();
+	USART1_Initialize();
 	//WATCHDOG_Initialize();
 	
 }

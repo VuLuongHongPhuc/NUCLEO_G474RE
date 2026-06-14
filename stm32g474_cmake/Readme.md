@@ -16,3 +16,5 @@ Board NUCLEO-G474RE
 | LPUART1_TX   | PA2      | 14         |
 | BUILT_IN_LED | PA5      | 19         |
 | BTN_USER     | PC13     |  2         |
+| USART1_TX    | PC4      | 22         |
+| USART1_RX    | PC5      | 23         |

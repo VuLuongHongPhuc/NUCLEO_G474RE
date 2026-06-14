@@ -1,5 +1,5 @@
 /**
- * @file lpuart1.h
+ * @file lpuart1.c
  * @brief Low Power UART1 interface
  * @details This file contains the interface for Low Power UART1 operations.
  * 
@@ -59,8 +59,11 @@ static inline void InitializeGPIO(void)
 	/* !!! NOTE : ALTERNATE FUNCTION (AFx) find in doc DS12288 p.73 */
 
 	/* Pin PA2/PA3 */
-
-	LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOA);
+	volatile uint32_t tmpreg = READ_BIT(RCC->AHB2ENR, LL_AHB2_GRP1_PERIPH_GPIOA);
+    if (tmpreg != LL_AHB2_GRP1_PERIPH_GPIOA)
+	{
+		LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOA);
+	}
 
 	/* PA2     ------> LPUART1_TX */
 	LL_GPIO_SetPinMode      (GPIOA, LL_GPIO_PIN_2, LL_GPIO_MODE_ALTERNATE);
@@ -89,6 +92,7 @@ static inline void InitializeLPUART(void)
 	// p.1684 Character transmission procedure ---> configuration
 
 	/* UART parameters:
+	 * LPUART1 @ 0x4000_8000
 	 * bauds 115200
 	 * 8 bits
 	 * 1 stop
@@ -101,10 +105,6 @@ static inline void InitializeLPUART(void)
 	/* Clock LPUART (RCC) */
 	LL_RCC_SetLPUARTClockSource(LL_RCC_LPUART1_CLKSOURCE_PCLK1);
 	LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_LPUART1);
-
-	//LL_USART_ConfigCharacter(LPUART1, LL_USART_DATAWIDTH_8B, LL_USART_PARITY_NONE, LL_USART_STOPBITS_1);
-	//LL_USART_SetBaudRate(LPUART1, 25000000, LL_USART_PRESCALER_DIV1, LL_USART_OVERSAMPLING_16, 115200);
-
 
 	// Async mode : default
 	//LL_USART_DisableHalfDuplex(LPUART1);
@@ -121,7 +121,7 @@ static inline void InitializeLPUART(void)
 	// Prescaler default = DIV1
 	//LL_USART_SetPrescaler(LPUART1, LL_USART_PRESCALER_DIV1);
 
-	// Baud rate 115200
+	// Baud rate 115200 = LL_LPUART_GetBaudRate(LPUART1, PCLK1_Frequency==25_000_000, LL_USART_PRESCALER_DIV1)
 	LPUART1->BRR = 0xd904;
 
 	// Receive enable CR1.RE / Transmitter enable CR1.TE

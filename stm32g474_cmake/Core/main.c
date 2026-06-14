@@ -20,6 +20,7 @@
 #include "system.h"
 #include "gpio.h"
 #include "lpuart1.h"
+#include "usart1.h"
 
 
 __STATIC_INLINE uint32_t GetElapseTime(uint32_t tick, uint32_t value)
@@ -75,6 +76,8 @@ int main(void)
 			LPUART1_TestTransmit();
 			LPUART1_TestReceive();
 			#endif
+
+			USART1_Write(0x33);
 			
 		}
 
