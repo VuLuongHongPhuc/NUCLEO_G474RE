@@ -38,12 +38,12 @@ __STATIC_INLINE uint32_t GetElapseTime(uint32_t tick, uint32_t value)
 int main(void)
 {
 	static LL_RCC_ClocksTypeDef clock_ref = {0};
-
+	
 	uint32_t last_time;
 	uint32_t time_elapse;
-
+	
 	GLOBAL_Initialize();
-
+	
 	/* DEBUG - get clocks frequencies */
 	LL_RCC_GetSystemClocksFreq(&clock_ref);
 	printf("SYSTEM frequencies:\r\n");
@@ -77,8 +77,10 @@ int main(void)
 			LPUART1_TestReceive();
 			#endif
 
-			USART1_Write(0x33);
-			
+			#if 1
+			uint8_t buf[3] = { 0x33, 0x22, 0x11 };
+			USART1_Write(buf, 3);
+			#endif
 		}
 
 	}// END : while(1)

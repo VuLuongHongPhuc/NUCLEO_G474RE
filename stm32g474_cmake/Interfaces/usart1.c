@@ -14,36 +14,49 @@
 #include <stm32g4xx_ll_gpio.h>
 #include <stm32g4xx_ll_rcc.h>
 #include <stm32g4xx_ll_bus.h>
+#include <stm32g4xx_ll_dma.h>
 
 #include "usart1.h"
 #include "stream.h"
 
 /********************************* Define & Macros ********************************/
 
-#define ENALBE_INTERRUPT		1
+#define INTERRUPT_ENABLED		1
+#define DMA_USED                1
 
 #define USART1_INT_PRIORITY		8U
+#define DMA1_CH1_INT_PRIORITY   9U
 
-#define RX_BUFFER_SIZE			128U
+#define RX_BUFFER_SIZE			32U
+#define TX_BUFFER_SIZE			128U
 
 /********************************* Local variables ********************************/
 
-static uint8_t _rxBuf[RX_BUFFER_SIZE];
-static Stream_t _rxStream;
+static uint32_t _periphClock;
+
+static uint8_t _txBuf[TX_BUFFER_SIZE+1];
+static Stream_t _txStream;
+
+#if (DMA_USED == 1)
+	static uint8_t _rxDmaBuf[RX_BUFFER_SIZE+1];
+#endif
 
 /********************************* Local prototypes *******************************/
 
 static inline void InitializeUSART(void);
 static inline void InitializeGPIO(void);
+static inline void TransmitRemainingData(void);
 
 /********************************* Implementations ********************************/
 
-void USART1_Initialize(void)
+void USART1_Initialize(const uint32_t * const pclk2_frequency)
 {
+	_periphClock = *pclk2_frequency;
+
     InitializeGPIO();
     InitializeUSART();
 
-	STREAM_Initialize(&_rxStream, _rxBuf, RX_BUFFER_SIZE);
+	STREAM_Initialize(&_txStream, _txBuf, TX_BUFFER_SIZE);
 }
 
 static inline void InitializeGPIO(void)
@@ -83,7 +96,7 @@ static inline void InitializeGPIO(void)
 static inline void InitializeUSART(void)
 {
     /* UART parameters:
-	 * USART1 @ 0x4001_3800
+	 * USART1 @ 0x4001_3800 p.82
 	 * bauds 115200
 	 * 8 bits
 	 * 1 stop
@@ -96,8 +109,8 @@ static inline void InitializeUSART(void)
      * PCLK2_Frequency = 25 MHz
      */
 
-	/* Reset & disable CR1.UE */
-	USART1->CR1 = 0;
+	/* Disable CR1.UE */
+	LL_USART_Disable(USART1);
 
 	/* Clock USART1 (RCC) */
 	LL_RCC_SetUSARTClockSource(LL_RCC_USART1_CLKSOURCE_PCLK2);
@@ -105,59 +118,239 @@ static inline void InitializeUSART(void)
 
 	/* default: asynchronous */
 
-	/* Oversampling: default 16 */
+	/* Oversampling CR1.OVER8 (default 16) */
+	//LL_USART_SetOverSampling(USART1, LL_USART_OVERSAMPLING_16);
 
 	/* default: 1 stop, 8 bits, no parity */
+	//LL_USART_ConfigCharacter(USART1, LL_USART_DATAWIDTH_8B, LL_USART_PARITY_NONE, LL_USART_STOPBITS_1);
 
-	/* p.1609 - baud 115200 -> 217 = 0xD9 */
-	USART1->BRR = 0xD9;
+	/* p.1609 - BRR baud 115200 -> 217 = 0xD9 */
+	LL_USART_SetBaudRate(USART1,
+						_periphClock,
+						LL_USART_GetPrescaler(USART1),
+						LL_USART_OVERSAMPLING_16,
+						115200);
 
-	/* FIFO Enable */
-	SET_BIT(USART1->CR1, USART_CR1_FIFOEN);
+	/* CR1.FIFOEN */
+	LL_USART_EnableFIFO(USART1);
 
-    
     /* Receive enable CR1.RE / Transmitter enable CR1.TE */
 	LL_USART_SetTransferDirection(USART1, LL_USART_DIRECTION_TX_RX);
 	
-#if (ENALBE_INTERRUPT == 1)	
-	/* IDLE interrupt enable */
-	SET_BIT(USART1->CR1, USART_CR1_IDLEIE);
+	#if (INTERRUPT_ENABLED == 1)
+	
+	NVIC_SetPriority(USART1_IRQn, USART1_INT_PRIORITY);	/* Set interrupt priority */
+	NVIC_EnableIRQ(USART1_IRQn);						/* Enable IRQ in NVIC */
+	
+	SET_BIT(USART1->CR1, USART_CR1_IDLEIE);	/* IDLE interrupt enabled CR1.IDLEIE */
+	SET_BIT(USART1->ICR, USART_ICR_IDLECF);	/* Clear flag IDLE */
+	
+	SET_BIT(USART1->CR3, USART_CR3_EIE);	/* Error interrupt enabled CR3.EIE */
+	SET_BIT(USART1->ICR, USART_ICR_FECF);	/* Clear flag FE */
+	SET_BIT(USART1->ICR, USART_ICR_ORECF);	/* Clear flag ORE */
+	SET_BIT(USART1->ICR, USART_ICR_NECF);	/* Clear flag NE */
+	SET_BIT(USART1->ICR, USART_ICR_UDRCF);	/* Clear flag UDR */
 
-	/* Set priority of Interrupt */
-	NVIC_SetPriority(LPUART1_IRQn, USART1_INT_PRIORITY);
+	#endif
 
-	/* Enable IRQ in NVIC */
-	NVIC_EnableIRQ(USART1_IRQn);
-#endif
+	#if (DMA_USED == 1)
 
+	/* p.310 - clock enable */
+	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMAMUX1);
+	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
+
+	/* p.408 - configure DMA channel */
+
+	/* Disable channel CCR.EN */
+	LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_1);
+
+	/* Set DMA request for DMA instance on Channel 1 CSELR.CxS */
+	LL_DMA_SetPeriphRequest(DMA1, LL_DMA_CHANNEL_1, LL_DMAMUX_REQ_USART1_RX);
+	
+	/* Configure the Source and Destination addresses CPAR.PA, CMAR.MA */
+	LL_DMA_ConfigAddresses(DMA1, LL_DMA_CHANNEL_1, (uint32_t)&USART1->RDR, (uint32_t)&_rxDmaBuf[0], LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
+
+	/* Set Number of data to transfer CNDTR.NDT */
+	LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_1, RX_BUFFER_SIZE);
+	
+	/* Set Data transfer direction CCR.DIR, CCR.MEM2MEM */
+	LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_1, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
+	
+	LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MODE_NORMAL);	/* CCR.CIRC */
+	
+	/* Increment address index */
+	LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MEMORY_NOINCREMENT);	/* PINC */
+	LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MEMORY_INCREMENT);	/* MINC */
+	
+	/* Data size */
+	LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PDATAALIGN_BYTE);	/* CCR.PSIZE */
+	LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MDATAALIGN_BYTE);	/* CCR.MSIZE */
+	
+	LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PRIORITY_LOW);	/* CCR.PL */
+	
+	/* Set IT */
+    LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_1);	/* CCR.TCIE Transfert complete interrupt enabled */
+    LL_DMA_EnableIT_TE(DMA1, LL_DMA_CHANNEL_1); /* CCR.TEIE Transfer error interrupt enabled */
+	
+	/* Clear interrupt flag */
+	SET_BIT(DMA1->IFCR, LL_DMA_IFCR_CTCIF1);
+	SET_BIT(DMA1->IFCR, LL_DMA_IFCR_CTEIF1);
+
+	/* Enable IRQ */
+	NVIC_SetPriority(DMA1_Channel1_IRQn, DMA1_CH1_INT_PRIORITY);	/* Set interrupt priority */
+	NVIC_EnableIRQ(DMA1_Channel1_IRQn);								/* Enable IRQ in NVIC */
+	
+	SET_BIT(USART1->CR3, USART_CR3_DMAR);	/* USART1 DMA enabled */
+
+	LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_1);
+
+	#endif
+	
     /* Enable CR1.UE */
 	LL_USART_Enable(USART1);
+}	
+
+
+static inline void TransmitRemainingData(void)
+{
+	uint8_t data = 0;
+	uint16_t nLu = 0;
+
+	nLu = STREAM_Read(&_txStream, &data, 1);
+
+	if (nLu)
+	{
+		LPUART1->TDR = data;
+
+		/* Continue to fill the TXFIFO */
+		do
+		{
+			/* is TXFIFO full ? */
+			if ( !(USART1->ISR & USART_ISR_TXE_TXFNF) )
+				break;
+
+			nLu = STREAM_Read(&_txStream, &data, 1);
+
+			if ( !nLu )
+				break;
+
+			LPUART1->TDR = data;
+
+		}while(nLu);
+	}
+	else
+	{
+		/* Nothing left to transfer - remove IT */
+		LL_USART_DisableIT_TXFE(USART1);
+	}
 }
 
-void USART1_Write(uint8_t value)
+bool USART1_Write(const uint8_t * const pBuf, uint16_t length)
 {
-	if (USART1->ISR & USART_ISR_TXE_TXFNF)
-	{
-		USART1->TDR = value;
+	uint8_t data = 0;
+	uint16_t nLu = 0;
+
+	/* Copy to stream */
+	(void)STREAM_Write(&_txStream, pBuf, length);
+
+	/* Fill TXFIFO buffer */
+	while (USART1->ISR & USART_ISR_TXE_TXFNF)
+	{/* TXFIFO not full */
+		nLu = STREAM_Read(&_txStream, &data, 1);
+		
+		if (nLu)
+		{
+			USART1->TDR = data;
+		}
+		else
+		{
+			break;
+		}
 	}
+
+	/* If TX interrupt is enabled, do not proceed here */
+	if (!(USART1->CR1 & USART_CR1_TXFEIE))
+	{
+		// Enable FIFO empty interrupt --> auto write remaining data from interrupt
+		LL_USART_EnableIT_TXFE(USART1);
+	}
+
+	return true;
 }
 
 
 void USART1_IRQHandler(void)
 {
+	/* Receive */
 	if (USART1->ISR & USART_ISR_IDLE)
 	{
 		/* Clear flag IDLE */
 		SET_BIT(USART1->ICR, USART_ICR_IDLECF);
 
 		/* Read all in buffer FIFO */
-		uint8_t count = 0;
-		uint8_t c = 0;
-		while(USART1->ISR & USART_ISR_RXNE_RXFNE)
-		{
-			count++;
-			c = USART1->RDR;
-			(void)STREAM_Write(&_rxStream, &c, 1);
-		}
+		// uint8_t count = 0;
+		// uint8_t c = 0;
+		// while(USART1->ISR & USART_ISR_RXNE_RXFNE)
+		// {
+		// 	count++;
+		// 	c = USART1->RDR;
+		// 	(void)c;
+		// }
+
+		uint32_t numberOfByteRead = RX_BUFFER_SIZE - LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_1);
+		(void)numberOfByteRead;
+
+		/* Reload DMA */
+		LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_1);
+		LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_1, RX_BUFFER_SIZE);
+		LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_1);
+	}
+
+	/* Transmit */
+	if (LL_USART_IsActiveFlag_TXFE(USART1))
+	{/* TXFE: TXFIFO empty */
+		TransmitRemainingData();
+	}
+	
+
+	/* ERROR - CR3.EIE */
+	
+	if (USART1->ISR & USART_ISR_FE)
+	{
+		SET_BIT(USART1->ICR, USART_ICR_FECF);	/* Clear flag FE */
+	}
+
+	if (USART1->ISR & USART_ISR_ORE)
+	{
+		SET_BIT(USART1->ICR, USART_ICR_ORECF);	/* Clear flag ORE */
+	}
+
+	if (USART1->ISR & USART_ISR_NE)
+	{
+		SET_BIT(USART1->ICR, USART_ICR_NECF);	/* Clear flag NE */
+	}
+
+	if (USART1->ISR & USART_ISR_UDR)
+	{
+		SET_BIT(USART1->ICR, USART_ICR_UDRCF);	/* Clear flag UDR */
+	}
+}
+
+void DMA1_Channel1_IRQHandler(void)
+{
+	/* Transfer complete */
+	if (DMA1->ISR & LL_DMA_ISR_TCIF1)
+	{
+		LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_1);
+		LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_1, RX_BUFFER_SIZE);
+		LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_1);
+
+		DMA1->IFCR |= LL_DMA_IFCR_CTCIF1;
+	}
+
+	/* Transfer error */
+	if (DMA1->ISR & LL_DMA_ISR_TEIF1)
+	{
+		DMA1->IFCR |= LL_DMA_IFCR_CTEIF1;
 	}
 }

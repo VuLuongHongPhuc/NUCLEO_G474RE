@@ -29,11 +29,12 @@ extern "C" {
 
 /**
  * @brief USART1 initialization
+ * @param pclk2_frequency - PCLK2 frequency
  * @retval None
  * */
-void USART1_Initialize(void);
+void USART1_Initialize(const uint32_t * const pclk2_frequency);
 
-void USART1_Write(uint8_t value);
+bool USART1_Write(const uint8_t * const pBuf, uint16_t length);
 
 /********************************* Inline implementations *************************/
 
