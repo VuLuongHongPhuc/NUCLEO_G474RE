@@ -4,11 +4,11 @@ cmake_minimum_required(VERSION 3.23.1)
 # Optional: print out extra messages to see what is going on. Comment it to have less verbose messages
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 
-# Path to toolchain file. This one has to be before 'project()' below
+# Path to toolchain file. This one has to be before 'project()'
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/Buildtools.cmake)
 
 # Create a project named
-project(STM32_G474RET)
+project(STM32_G474RET_RTOS)
 set(EXECUTABLE ${PROJECT_NAME}.elf)
 set(LINKER_FILE ${CMAKE_SOURCE_DIR}/STM32G474RETX.ld)
 
@@ -23,12 +23,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 message(STATUS "CMAKE_TOOLCHAIN_FILE is: ${CMAKE_TOOLCHAIN_FILE}")
 
 # Add subdirectories - order matters
-#add_subdirectory(FreeRTOS-Kernel)
+add_subdirectory(FreeRTOS-Kernel)
 add_subdirectory(stm32_ll)
 add_subdirectory(Utils)
 add_subdirectory(Interfaces)
 
-# add freeRTOS lib
+# Alternative add freeRTOS lib
 #add_library(freertos_kernel_lib STATIC IMPORTED)
 #set_target_properties(freertos_kernel_lib PROPERTIES
 #       IMPORTED_LOCATION "/FreeRTOS/bin/freertos_kernel.a"
@@ -46,11 +46,18 @@ set(PROJECT_SOURCES
         Core/Initialize.c
         Core/syscalls.c
         Core/system.c
+        Core/common.c
+        Core/task_main.c
+        Core/task_host.c
+        Core/task_monitor.c
     )
 
 # Add an executable to the project
 add_executable(${EXECUTABLE} ${PROJECT_SOURCES})
-target_link_libraries(${EXECUTABLE} PRIVATE lldlib)
+target_link_libraries(${EXECUTABLE} PRIVATE 
+        lld_lib
+        freertos_kernel_lib
+        )
 
 # List of compiler defines, prefix with -D compiler option
 target_compile_definitions(${EXECUTABLE} PRIVATE
@@ -61,9 +68,9 @@ target_compile_definitions(${EXECUTABLE} PRIVATE
 
 # List of include directories
 target_include_directories(${EXECUTABLE} PRIVATE
-        ${CMAKE_SOURCE_DIR}/Core
-        ${CMAKE_SOURCE_DIR}/Interfaces
-        ${CMAKE_SOURCE_DIR}/Utils
+        ${CMAKE_SOURCE_DIR}/Core/include
+        ${CMAKE_SOURCE_DIR}/Interfaces/include
+        ${CMAKE_SOURCE_DIR}/Utils/include
         )
 
 # Set ASM compiler options
