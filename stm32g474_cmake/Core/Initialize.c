@@ -32,7 +32,7 @@ void GLOBAL_Initialize(void)
 	LL_RCC_GetSystemClocksFreq(&clock_ref);
 
 	GPIO_Initialize();
-	LPUART1_Initialize();
+	LPUART1_Initialize(clock_ref.PCLK1_Frequency);
 	USART1_Initialize(&clock_ref.PCLK2_Frequency);
 	//WATCHDOG_Initialize();
 	

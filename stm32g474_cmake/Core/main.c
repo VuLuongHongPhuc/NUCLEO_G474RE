@@ -72,12 +72,12 @@ int main(void)
 			printf("%d\r\n", (int)time_elapse);
 			#endif
 
-			#if 0
+			#if 1
 			LPUART1_TestTransmit();
 			LPUART1_TestReceive();
 			#endif
 
-			#if 1
+			#if 0
 			uint8_t buf[3] = { 0x33, 0x22, 0x11 };
 			USART1_Write(buf, 3);
 			#endif

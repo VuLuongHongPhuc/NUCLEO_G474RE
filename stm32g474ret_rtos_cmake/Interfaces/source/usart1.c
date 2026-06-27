@@ -9,6 +9,8 @@
 /********************************* Includes ***************************************/
 
 #include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include <stm32g4xx.h>
 #include <stm32g4xx_ll_usart.h>
 #include <stm32g4xx_ll_gpio.h>
@@ -16,13 +18,10 @@
 #include <stm32g4xx_ll_bus.h>
 #include <stm32g4xx_ll_dma.h>
 
-#include "usart1.h"
+//#include "usart1.h"
 #include "stream.h"
 
 /********************************* Define & Macros ********************************/
-
-#define INTERRUPT_ENABLED		1
-#define DMA_USED                1
 
 #define USART1_INT_PRIORITY		8U
 #define DMA1_CH1_INT_PRIORITY   9U
@@ -37,14 +36,14 @@ static uint32_t _periphClock;
 static uint8_t _txBuf[TX_BUFFER_SIZE+1];
 static Stream_t _txStream;
 
-#if (DMA_USED == 1)
-	static uint8_t _rxDmaBuf[RX_BUFFER_SIZE+1];
-#endif
+static uint8_t _rxDmaBuf[RX_BUFFER_SIZE+1];
 
 /********************************* Local prototypes *******************************/
 
 static inline void InitializeUSART(void);
 static inline void InitializeGPIO(void);
+static inline void InitializeDMA(void);
+static inline void InitializeInterrupt(void);
 static inline void TransmitRemainingData(void);
 
 /********************************* Implementations ********************************/
@@ -102,7 +101,7 @@ static inline void InitializeUSART(void)
 	 * 1 stop
 	 * parity none
 	 * oversampling 16
-	 * 
+	 * FIFO ON
 	 */
 
     /* SYSTEM parameters:
@@ -136,9 +135,18 @@ static inline void InitializeUSART(void)
 
     /* Receive enable CR1.RE / Transmitter enable CR1.TE */
 	LL_USART_SetTransferDirection(USART1, LL_USART_DIRECTION_TX_RX);
+
 	
-	#if (INTERRUPT_ENABLED == 1)
-	
+	InitializeInterrupt();
+
+	InitializeDMA();
+
+    /* Enable CR1.UE */
+	LL_USART_Enable(USART1);
+}
+
+static inline void InitializeInterrupt(void)
+{
 	NVIC_SetPriority(USART1_IRQn, USART1_INT_PRIORITY);	/* Set interrupt priority */
 	NVIC_EnableIRQ(USART1_IRQn);						/* Enable IRQ in NVIC */
 	
@@ -150,11 +158,10 @@ static inline void InitializeUSART(void)
 	SET_BIT(USART1->ICR, USART_ICR_ORECF);	/* Clear flag ORE */
 	SET_BIT(USART1->ICR, USART_ICR_NECF);	/* Clear flag NE */
 	SET_BIT(USART1->ICR, USART_ICR_UDRCF);	/* Clear flag UDR */
+}
 
-	#endif
-
-	#if (DMA_USED == 1)
-
+static inline void InitializeDMA(void)
+{
 	/* p.310 - clock enable */
 	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMAMUX1);
 	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
@@ -203,12 +210,7 @@ static inline void InitializeUSART(void)
 	LL_USART_EnableDMAReq_RX(USART1);	/* USART1 DMA enabled */
 
 	LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_1);
-
-	#endif
-	
-    /* Enable CR1.UE */
-	LL_USART_Enable(USART1);
-}	
+}
 
 
 static inline void TransmitRemainingData(void)

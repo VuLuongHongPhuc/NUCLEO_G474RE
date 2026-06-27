@@ -14,17 +14,23 @@
 #include <stm32g4xx_ll_rcc.h>
 #include <stm32g4xx_ll_gpio.h>
 #include <stm32g4xx_ll_iwdg.h>
+//#include <stm32g4xx_ll_bus.h>
 
 #include <FreeRTOS.h>
 #include <task.h>
 #include <queue.h>
 
 #include "main.h"
-#include "Initialize.h"
 #include "task_config.h"
 #include "task_main.h"
 #include "task_host.h"
 #include "task_monitor.h"
+#include "system.h"
+#include "lpuart1.h"
+#include "watchdog.h"
+#include "gpio.h"
+#include "usart1.h"
+
 
 /********************************* Constants definition ***************************/
 
@@ -52,10 +58,16 @@ int main(void)
 {
 	LL_RCC_ClocksTypeDef clock_ref = {0};
 	
-	GLOBAL_Initialize();
+    SYSTEM_Initialize();
+
+	LL_RCC_GetSystemClocksFreq(&clock_ref);/* Get clock */
+	GPIO_Initialize();	
+	USART1_Initialize(&clock_ref.PCLK2_Frequency);
+    LPUART1_Initialize(clock_ref.PCLK1_Frequency);
+	//WATCHDOG_Initialize();
+
 	
-	/* DEBUG - get clocks frequencies */
-	LL_RCC_GetSystemClocksFreq(&clock_ref);
+	/* DEBUG - clocks frequencies */
 	printf("SYSTEM frequencies:\r\n");
 	printf(" - SYSCLK: %d\r\n", (int)clock_ref.SYSCLK_Frequency);
 	printf(" - HCLK  : %d\r\n", (int)clock_ref.HCLK_Frequency);

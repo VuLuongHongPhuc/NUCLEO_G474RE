@@ -1,3 +1,10 @@
+/**
+ * @file convert_to_string.c
+ * @brief Convert to string
+ * 
+ * @author Phuc VU
+ * @date Jun 20, 2026
+ */
 
 /********************************* Includes ***************************************/
 
@@ -18,16 +25,29 @@ static const char digit_pairs[] =
     "90919293949596979899";
 
 /********************************* Macros definition ******************************/
+
 /********************************* Types definition *******************************/
+
 /********************************* Local variable *********************************/
+
 /********************************* API functions prototype ************************/
 
+/**
+ * @brief Convert uint32 to string
+ * @note Use
+ *     char str[11];
+ *     u32toa(4294967295, str); // max uint32 = 10 char -> str == "4294967295" 
+ * @param[in]  value  - Input value to convert
+ * @param[out] buf    - Output value string converted
+ * @retval - buf pointer
+ */
 char *u32toa(uint32_t value, char *buf)
 {
     char temp[10];
     char *p = temp + sizeof(temp);
 
-    while (value >= 100) {
+    while (value >= 100) 
+    {
         uint32_t q = value / 100;
         uint32_t r = value - q * 100;
 
@@ -38,9 +58,12 @@ char *u32toa(uint32_t value, char *buf)
         value = q;
     }
 
-    if (value < 10) {
+    if (value < 10) 
+    {
         *--p = (char)('0' + value);
-    } else {
+    }
+    else
+    {
         p -= 2;
         p[0] = digit_pairs[value * 2];
         p[1] = digit_pairs[value * 2 + 1];
@@ -54,7 +77,18 @@ char *u32toa(uint32_t value, char *buf)
     return buf;
 }
 
-
+/**
+ * @brief Convert float to string with fixed-point at 3
+ * @note Use
+ *     int32_t value = (int32_t)(floatValue * 1000);
+ *     char str[16];
+ *     fixed3_to_str(12345, str);   // "12.345"
+ *     fixed3_to_str(-9876, str);   // "-9.876"
+ *     fixed3_to_str(42, str);      // "0.042"
+ * @param[in]  value  - Input value to convert
+ * @param[out] buf    - Output value string converted
+ * @retval - buf pointer
+ */
 char *fixed3_to_str(int32_t value, char *buf)
 {
     char *p = buf;

@@ -9,10 +9,12 @@
 /********************************* Includes ***************************************/
 
 #include <stdio.h>
+#include <stm32g4xx_ll_lpuart.h>
 #include "task_config.h"
 #include "task_monitor.h"
 #include "lpuart1.h"
 #include "convert_to_string.h"
+#include <stream_buffer.h>
 
 /********************************* Constants definition ***************************/
 
@@ -26,25 +28,23 @@
 
 /********************************* API functions **********************************/
 
-
-
-
-
 void MonitorTask(void* pv_parameters)
 {    
     TaskMonitor_param_t* p_task_param = NULL;
-    p_task_param = (TaskMonitor_param_t*) pv_parameters;
-
     TaskHandle_t task_handle;
     UBaseType_t free_stack;
     uint8_t task_id = 0;
+
+    size_t numberOfBytesSend, i;
     
-    //char str[11];
+    p_task_param = (TaskMonitor_param_t*) pv_parameters;
+    
+
+    char str[configMAX_TASK_NAME_LEN + 1];
+    char * p_task_name;
+    bool end_car;
 
 
-    printf("Task Name\t\t");
-    printf("Free stack space in byte\n");
-    printf("-----------------------------------------\n");
     while(1)
     {
         vTaskDelay(1000);
@@ -57,20 +57,32 @@ void MonitorTask(void* pv_parameters)
         }
 
         free_stack = uxTaskGetStackHighWaterMark(task_handle);
-        //if (free_stack < 20)
+
+        /* Task Name */
+        end_car = false;
+        p_task_name = pcTaskGetName(task_handle);
+        for(i=0; i<configMAX_TASK_NAME_LEN; i++)
         {
-            printf("%s\t\t", pcTaskGetName(task_handle));
-            printf("%u\n", (unsigned int)free_stack);
-
-            //(void)u32toa((uint32_t)free_stack, str);
-            //printf("%s\n", str);
-        }
+            if (end_car)
+            {
+                str[i] = 0x20; /* space */
+            }
+            else
+            {
+                str[i] = *p_task_name++;
+            }
             
+            if (str[i] == '\0')
+            {
+                str[i] = 0x20;
+                end_car = true;
+            }
+        }
+        LPUART1_Write(str, configMAX_TASK_NAME_LEN);
 
-        #if 0
-        LPUART1_TestTransmit();
-        LPUART1_TestReceive();
-        #endif
+        /* Stack free space left */
+        (void)u32toa((uint32_t)free_stack, str);
+        LPUART1_Write(str, 11);
     }
 }
 

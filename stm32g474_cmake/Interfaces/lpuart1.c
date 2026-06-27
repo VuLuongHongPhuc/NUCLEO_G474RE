@@ -10,25 +10,31 @@
 /********************************* Includes ***************************************/
 #include <stdio.h>
 #include <stm32g4xx.h>
-#include <stm32g4xx_ll_usart.h>
+#include <stm32g4xx_ll_lpuart.h>
 #include <stm32g4xx_ll_gpio.h>
 #include <stm32g4xx_ll_rcc.h>
 #include <stm32g4xx_ll_bus.h>
+#include <stm32g4xx_ll_dma.h>
 
 #include "lpuart1.h"
 #include "stream.h"
 
 
 /********************************* Macros *****************************************/
-#define FIFO_ENABLED	    1
+
 #define INTERRUPT_ENABLED	1
 
-#define LPUART1_INT_PRIORITY	    7U
+#define FIFO_SIZE                8U
 
-#define RX_BUFFER_SIZE 128U
-#define TX_BUFFER_SIZE 128U
+#define LPUART1_INT_PRIORITY	 7U
+
+#define RX_BUFFER_DMA_SIZE       32U
+#define RX_BUFFER_SIZE           128U
+#define TX_BUFFER_SIZE           128U
 
 /********************************* Local variables ********************************/
+
+//static uint8_t _rxBufDma[RX_BUFFER_DMA_SIZE];
 static uint8_t _rxBuf[RX_BUFFER_SIZE];
 static uint8_t _txBuf[TX_BUFFER_SIZE];
 
@@ -37,7 +43,8 @@ static Stream_t _txStream;
 
 /********************************* Local prototypes *******************************/
 static inline void InitializeGPIO(void);
-static inline void InitializeLPUART(void);
+static inline void InitializeLPUART(uint32_t pclk1_frequency);
+static inline void InitializeInterrupt(void);
 
 static inline void TransmitRemainingData(void);
 
@@ -45,10 +52,15 @@ void LPUART1_IRQHandler(void);
 
 /********************************* Implementations ********************************/
 
-void LPUART1_Initialize(void)
+/**
+ * @brief LPUART initialization
+ * @param[in] pclk1_frequency - PCLK1 frequency
+ * @retval None
+ */
+void LPUART1_Initialize(uint32_t pclk1_frequency)
 {
 	InitializeGPIO();
-	InitializeLPUART();
+	InitializeLPUART(pclk1_frequency);
 
 	STREAM_Initialize(&_rxStream, _rxBuf, RX_BUFFER_SIZE);
 	STREAM_Initialize(&_txStream, _txBuf, TX_BUFFER_SIZE);
@@ -87,7 +99,7 @@ static inline void InitializeGPIO(void)
 }
 
 
-static inline void InitializeLPUART(void)
+static inline void InitializeLPUART(uint32_t pclk1_frequency)
 {
 	// p.1684 Character transmission procedure ---> configuration
 
@@ -97,10 +109,11 @@ static inline void InitializeLPUART(void)
 	 * 8 bits
 	 * 1 stop
 	 * parity none
+	 * FIFO ON
 	 */
 
 	/* Disable LPUART CR1.UE */
-	LL_USART_Disable(LPUART1);
+	LL_LPUART_Disable(LPUART1);
 
 	/* Clock LPUART (RCC) */
 	LL_RCC_SetLPUARTClockSource(LL_RCC_LPUART1_CLKSOURCE_PCLK1);
@@ -110,41 +123,40 @@ static inline void InitializeLPUART(void)
 	//LL_USART_DisableHalfDuplex(LPUART1);
 
 	// Parity CR1.PCE & CR1.PS : default NONE
-	//
 
 	// Data length CR1.M1 & CR1.M0 : default 1 Start bit, 8 Data bits, n Stop bit
-	//
 
-	// Stop bits : default 1
-	//CLEAR_BIT(LPUART1->CR2, USART_CR2_STOP);
+	// Stop bits CR2.USART_CR2_STOP : default 1
 
 	// Prescaler default = DIV1
-	//LL_USART_SetPrescaler(LPUART1, LL_USART_PRESCALER_DIV1);
+	LL_LPUART_SetPrescaler(LPUART1, LL_LPUART_PRESCALER_DIV1);
 
-	// Baud rate 115200 = LL_LPUART_GetBaudRate(LPUART1, PCLK1_Frequency==25_000_000, LL_USART_PRESCALER_DIV1)
-	LPUART1->BRR = 0xd904;
+	LL_LPUART_SetBaudRate(LPUART1, pclk1_frequency, LL_LPUART_PRESCALER_DIV1, 115200);
+	//LPUART1->BRR = 0xd904;
 
 	// Receive enable CR1.RE / Transmitter enable CR1.TE
-	LL_USART_SetTransferDirection(LPUART1, LL_USART_DIRECTION_TX_RX);
+	LL_LPUART_SetTransferDirection(LPUART1, LL_LPUART_DIRECTION_TX_RX);
+
+	// CR1.FIFOEN
+	LL_LPUART_EnableFIFO(LPUART1);
+
+	// CR3.TXFTCFG - default LL_USART_FIFOTHRESHOLD_1_8
+	//LL_LPUART_SetTXFIFOThreshold(LPUART1, LL_USART_FIFOTHRESHOLD_1_8); 
 
 
-#if (FIFO_ENABLED == 1)
-	// CR1.FIFOEN Enable FIFO
-	SET_BIT(LPUART1->CR1, USART_CR1_FIFOEN);
-
-	// Set FIFO threshold - default LL_USART_FIFOTHRESHOLD_1_8
-	//LL_USART_SetTXFIFOThreshold(LPUART1, LL_USART_FIFOTHRESHOLD_1_8);
-	//LL_USART_SetRXFIFOThreshold(LPUART1, LL_USART_FIFOTHRESHOLD_1_4);
-#endif
+	InitializeInterrupt();
 
 
-#if (INTERRUPT_ENABLED == 1)
+	// Enable LPUART CR1.UE
+	LL_LPUART_Enable(LPUART1);
+}
 
+static inline void InitializeInterrupt(void)
+{
 	// Enable Transmitter complete interrupt
-	//LL_USART_EnableIT_TC(LPUART1); // trig all the time --> error?
+	//LL_USART_EnableIT_TC(LPUART1); // trig all the time
 
-	// Enable FIFO empty interrupt
-	//SET_BIT(LPUART1->CR1, USART_CR1_TXFEIE);
+	// Enable TXFIFO empty interrupt (CR1, USART_CR1_TXFEIE)
 	//LL_USART_EnableIT_TXFE(LPUART1);
 
 	// Transmit data register empty interrupt
@@ -157,9 +169,9 @@ static inline void InitializeLPUART(void)
 	//SET_BIT(LPUART1->CR3, USART_CR3_RXFTIE);
 
 	/* Enable Rx Interrupt : RX Not Empty --> USART_ISR_RXFT/USART_ISR_RXNE_RXFNE */
-	LL_USART_EnableIT_RXNE_RXFNE(LPUART1);
+	LL_LPUART_EnableIT_RXNE_RXFNE(LPUART1);
 
-	// CR3 Bit 0 EIE: Error interrupt enable --> USART_ISR_ORE/USART_ISR_NE/USART_ISR_FE
+	/* CR3 Bit 0 EIE: Error interrupt enable --> USART_ISR_ORE/USART_ISR_NE/USART_ISR_FE */
 	SET_BIT(LPUART1->CR3, USART_CR3_EIE);
 
 	/* Set priority of Interrupt */
@@ -167,126 +179,79 @@ static inline void InitializeLPUART(void)
 
 	/* Enable IRQ in NVIC */
 	NVIC_EnableIRQ(LPUART1_IRQn);
-
-#endif
-
-	// Enable LPUART CR1.UE
-	LL_USART_Enable(LPUART1);
-}
-
-void LPUART1_WriteOneData(const uint8_t value)
-{
-#if (FIFO_ENABLED == 1)
-
-	// Transmitter Enable
-	//LL_USART_EnableDirectionTx(LPUART1);
-
-	// TC = 1 --> Transmission complete
-	while(READ_BIT(LPUART1->ISR, USART_ISR_TC) != USART_ISR_TC);
-
-	// LPUART_ISR.TXFNF = 1 --> TXFIFO not full
-	if (LL_USART_IsActiveFlag_TXE_TXFNF(LPUART1))
-	{
-		// add data to transmit
-		LPUART1->TDR = value;
-	}
-
-	// Transmitter Disable
-	//LL_USART_DisableDirectionTx(LPUART1);
-
-#else
-	/* FIFO disabled */
-	// TXE transmit data register empty
-	if (READ_BIT(LPUART1->ISR, USART_ISR_TXE) == USART_ISR_TXE)
-	{
-		// add data to transmit
-		LPUART1->TDR = value;
-	}
-#endif
 }
 
 /*** TRANSMIT FUNCTIONS ************************************************/
 
+/**
+ * @brief Write multiple data to LPUART1
+ * @param pBuf Pointer to transmit buffer
+ * @param length Number of data to write
+ * @retval true if success, false otherwise
+ */
 bool LPUART1_Write( uint8_t const * const pBuf, uint16_t length)
 {
-	uint8_t data = 0;
-	uint16_t nLu = 0;
-
 	if ((!pBuf) || (!length))
 	{
 		return false;
 	}
 	
+	/* Check if the LPUART TX FIFO Empty Interrupt is enabled */
+	if (LPUART1->CR1 & USART_CR1_TXFEIE)
+		LL_LPUART_DisableIT_TXFE(LPUART1);
+
+	//NVIC_DisableIRQ(LPUART1_IRQn);
 	
-	NVIC_DisableIRQ(LPUART1_IRQn);
-	
-	/* Copy to stream */
-	(void)STREAM_Write(&_txStream, pBuf, length);
-	
-	/* Fill TXFIFO buffer */
-	while(LPUART1->ISR & USART_ISR_TXE_TXFNF)
+	if (LPUART1->ISR & USART_ISR_TXE_TXFNF)
 	{/* TXFIFO not full */
-		nLu = STREAM_Read(&_txStream, &data, 1);
-		
-		if (nLu)
-		{
-			LPUART1->TDR = data;
-		}
-		else
-		{
-			break;
-		}
-	}	
+		if (length > 1)
+			(void)STREAM_Write(&_txStream, &pBuf[1], length-1);
 
-	NVIC_EnableIRQ(LPUART1_IRQn);
-	
-
-	/* If TX interrupt is enabled, do not proceed here */
-	if (!(LPUART1->CR1 & USART_CR1_TXFEIE))
-	{
-		// Enable FIFO empty interrupt --> auto write remaining data from interrupt
-		LL_USART_EnableIT_TXFE(LPUART1);
+		LPUART1->TDR = pBuf[0];
 	}
+	else
+	{
+		/* Copy buffer to stream */
+		(void)STREAM_Write(&_txStream, &pBuf[0], length);
+	}
+	
+	//NVIC_EnableIRQ(LPUART1_IRQn);
+	
+	LL_LPUART_EnableIT_TXFE(LPUART1);
 
 	return true;
 }
 
 static inline void TransmitRemainingData(void)
 {
-	uint8_t data = 0;
+	uint8_t data[FIFO_SIZE+1] = {0};
 	uint16_t nLu = 0;
+	uint16_t i;
 
-	nLu = STREAM_Read(&_txStream, &data, 1);
+	nLu = STREAM_Read(&_txStream, data, FIFO_SIZE);
 
 	if (nLu)
 	{
-		LPUART1->TDR = data;
-
-		/* Continue to fill the TXFIFO */
-		do
+		for (i=0; i<nLu; i++)
 		{
-			/* is TXFIFO full ? */
-			if ( !(LPUART1->ISR & USART_ISR_TXE_TXFNF) )
-				break;
-
-			nLu = STREAM_Read(&_txStream, &data, 1);
-
-			if ( !nLu )
-				break;
-
-			LPUART1->TDR = data;
-
-		}while(nLu);
+			LPUART1->TDR = data[i];
+		}
 	}
 	else
 	{
-		// remove IT if nothing left from stream
-		LL_USART_DisableIT_TXFE(LPUART1);
+		/* Nothing left from stream -> remove IT  */
+		LL_LPUART_DisableIT_TXFE(LPUART1);
 	}
 }
 
 /*** RECEIVE FUNCTIONS ************************************************/
 
+/**
+ * @brief Read data from LPUART1
+ * @param pBuf Pointer to receive buffer
+ * @param length Number of data to read
+ * @retval Number of data actually read
+ */
 uint16_t LPUART1_Read(uint8_t * pBuf, uint8_t length)
 {
 	return STREAM_Read(&_rxStream, pBuf, length);
@@ -342,9 +307,31 @@ void LPUART1_IRQHandler(void)
 	}
 }
 
+#if 0
+void DMA1_Channel2_IRQHandler()
+{
+	/* Transfer complete */
+	if (DMA1->ISR & LL_DMA_ISR_TCIF1)
+	{
+		LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_2);
+		LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_2, RX_BUFFER_SIZE);
+		LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_2);
+
+		DMA1->IFCR |= LL_DMA_IFCR_CTCIF2;
+	}
+
+	/* Transfer error */
+	if (DMA1->ISR & LL_DMA_ISR_TEIF2)
+	{
+		DMA1->IFCR |= LL_DMA_IFCR_CTEIF2;
+	}
+}
+#endif
+
 void LPUART1_TestTransmit(void)
 {
-	uint8_t msg[] = "LPUART1 Test Transmit\r\n";
+	//uint8_t msg[] = "LPUART1 Test Transmit\r\n";
+	uint8_t msg[] = { 'V', 'R', 'O', 'O', 'M' };
 	LPUART1_Write( msg, sizeof(msg)/sizeof(msg[0]));
 }
 

@@ -2,17 +2,16 @@ cmake_minimum_required(VERSION 3.23.1)
 
 set(STM32_ll_LIB_NAME    "lld_lib")
 
-file(GLOB_RECURSE LLD_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
+file(GLOB_RECURSE LLD_SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/source/*.c")
 
 add_library(${STM32_ll_LIB_NAME}
         STATIC
-        ${LLD_SOURCES}
+        ${LLD_SOURCE_FILE}
 )
 
 target_compile_definitions(${STM32_ll_LIB_NAME} PRIVATE
         -DSTM32G474xx
         -DUSE_FULL_LL_DRIVER
-#        -DDEBUG
         )
 
 target_include_directories(${STM32_ll_LIB_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

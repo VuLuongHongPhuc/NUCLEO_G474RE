@@ -43,7 +43,6 @@ set(PROJECT_SOURCES
         ${INTERFACES_SRC}
         Core/main.c
         Core/stm32g4xx_startup.c
-        Core/Initialize.c
         Core/syscalls.c
         Core/system.c
         Core/common.c
@@ -78,7 +77,6 @@ target_compile_options(${EXECUTABLE} PRIVATE
         $<$<COMPILE_LANGUAGE:ASM>:-mcpu=cortex-m4>
         $<$<COMPILE_LANGUAGE:ASM>:-mlittle-endian>
         $<$<COMPILE_LANGUAGE:ASM>:-g3>
-#        $<$<COMPILE_LANGUAGE:ASM>:-DDEBUG>
         $<$<COMPILE_LANGUAGE:ASM>:-x>
         $<$<COMPILE_LANGUAGE:ASM>:-x assembler-with-cpp>
         $<$<COMPILE_LANGUAGE:ASM>:--specs=nano.specs>
@@ -111,7 +109,6 @@ target_compile_options(${EXECUTABLE} PRIVATE
         $<$<COMPILE_LANGUAGE:CXX>:-mcpu=cortex-m4>
         $<$<COMPILE_LANGUAGE:CXX>:-mlittle-endian>
         $<$<COMPILE_LANGUAGE:CXX>:-g3>
-#        $<$<COMPILE_LANGUAGE:CXX>:-DDEBUG>
         $<$<COMPILE_LANGUAGE:CXX>:-c>
         $<$<COMPILE_LANGUAGE:CXX>:-O0>
         $<$<COMPILE_LANGUAGE:CXX>:-ffunction-sections>
@@ -164,11 +161,13 @@ target_link_options(${EXECUTABLE} PRIVATE
 # Optional: Print executable size as part of the post build process
 add_custom_command(TARGET ${EXECUTABLE}
         POST_BUILD
-        COMMAND ${CMAKE_SIZE_UTIL} ${EXECUTABLE})
+        COMMAND ${CMAKE_SIZE_UTIL} ${EXECUTABLE}
+        )
 
 # Optional: Create hex, bin and S-Record files after the build
 add_custom_command(TARGET ${EXECUTABLE}
         POST_BUILD
         COMMAND ${CMAKE_OBJCOPY} -O srec --srec-len=64 ${EXECUTABLE} ${PROJECT_NAME}.s19
         COMMAND ${CMAKE_OBJCOPY} -O ihex ${EXECUTABLE} ${PROJECT_NAME}.hex
-        COMMAND ${CMAKE_OBJCOPY} -O binary ${EXECUTABLE} ${PROJECT_NAME}.bin)
+        COMMAND ${CMAKE_OBJCOPY} -O binary ${EXECUTABLE} ${PROJECT_NAME}.bin
+        )

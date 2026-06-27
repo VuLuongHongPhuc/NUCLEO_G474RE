@@ -23,3 +23,4 @@ Board NUCLEO-G474RE
 | NAME         | Channel x | Assign to  |
 |--------------|-----------|------------|
 | DMA1         | channel 1 | USART1_RX  |
+| DMA1         | channel 2 | LPUART1_RX |
