@@ -4,8 +4,8 @@ Board NUCLEO-G474RE
 - cmake v3.23
 - arm compiler 14.2
 ## Build command
-- create folder "bin" : $ mkdir bin
-- go into folder it: $ cd bin
+- create folder "bin": $ mkdir bin
+- go into folder: $ cd bin
 - generate makefiles: $ cmake ..
 - build: $ cmake --build .
 
@@ -23,4 +23,4 @@ Board NUCLEO-G474RE
 | NAME         | Channel x | Assign to  |
 |--------------|-----------|------------|
 | DMA1         | channel 1 | USART1_RX  |
-| DMA1         | channel 2 | LPUART1_RX |
+

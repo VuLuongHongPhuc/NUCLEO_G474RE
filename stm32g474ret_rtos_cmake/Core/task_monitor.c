@@ -34,16 +34,12 @@ void MonitorTask(void* pv_parameters)
     TaskHandle_t task_handle;
     UBaseType_t free_stack;
     uint8_t task_id = 0;
-
-    size_t numberOfBytesSend, i;
-    
-    p_task_param = (TaskMonitor_param_t*) pv_parameters;
-    
-
+    size_t i;
     char str[configMAX_TASK_NAME_LEN + 1];
     char * p_task_name;
     bool end_car;
-
+    
+    p_task_param = (TaskMonitor_param_t*) pv_parameters;
 
     while(1)
     {
@@ -78,11 +74,11 @@ void MonitorTask(void* pv_parameters)
                 end_car = true;
             }
         }
-        LPUART1_Write(str, configMAX_TASK_NAME_LEN);
+        LPUART1_Write((uint8_t*)str, configMAX_TASK_NAME_LEN);
 
         /* Stack free space left */
         (void)u32toa((uint32_t)free_stack, str);
-        LPUART1_Write(str, 11);
+        LPUART1_Write((uint8_t*)str, 11);
     }
 }
 

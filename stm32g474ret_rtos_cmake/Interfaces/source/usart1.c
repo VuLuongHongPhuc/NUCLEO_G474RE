@@ -23,6 +23,8 @@
 
 /********************************* Define & Macros ********************************/
 
+#define USART_FIFO_SIZE         8U
+
 #define USART1_INT_PRIORITY		8U
 #define DMA1_CH1_INT_PRIORITY   9U
 
@@ -215,30 +217,14 @@ static inline void InitializeDMA(void)
 
 static inline void TransmitRemainingData(void)
 {
-	uint8_t data = 0;
-	uint16_t nLu = 0;
+	uint8_t data[USART_FIFO_SIZE+1];
+	uint16_t numberOfBytesRead, i;
 
-	nLu = STREAM_Read(&_txStream, &data, 1);
-
-	if (nLu)
+	numberOfBytesRead = STREAM_Read(&_txStream, data, USART_FIFO_SIZE);
+	if (numberOfBytesRead > 0)
 	{
-		LPUART1->TDR = data;
-
-		/* Continue to fill the TXFIFO */
-		do
-		{
-			/* is TXFIFO full ? */
-			if ( !(USART1->ISR & USART_ISR_TXE_TXFNF) )
-				break;
-
-			nLu = STREAM_Read(&_txStream, &data, 1);
-
-			if ( !nLu )
-				break;
-
-			LPUART1->TDR = data;
-
-		}while(nLu);
+		for (i=0; i<numberOfBytesRead; i++)
+			USART1->TDR = data[i];
 	}
 	else
 	{
@@ -248,34 +234,28 @@ static inline void TransmitRemainingData(void)
 }
 
 bool USART1_Write(const uint8_t * const pBuf, uint16_t length)
-{
-	uint8_t data = 0;
-	uint16_t nLu = 0;
+{	
+	/* Is TX FIFO empty interrupt enabled ? */
+	if ((USART1->CR1 & USART_CR1_TXFEIE) == USART_CR1_TXFEIE)
+		LL_USART_DisableIT_TXFE(USART1);
 
-	/* Copy to stream */
-	(void)STREAM_Write(&_txStream, pBuf, length);
-
-	/* Fill TXFIFO buffer */
-	while (USART1->ISR & USART_ISR_TXE_TXFNF)
+	if (USART1->ISR & USART_ISR_TXE_TXFNF)
 	{/* TXFIFO not full */
-		nLu = STREAM_Read(&_txStream, &data, 1);
-		
-		if (nLu)
+
+		if (length > 1)
 		{
-			USART1->TDR = data;
+			(void)STREAM_Write(&_txStream, &pBuf[1], length-1);
 		}
-		else
-		{
-			break;
-		}
+
+		USART1->TDR = pBuf[0];
+	}
+	else
+	{
+		(void)STREAM_Write(&_txStream, pBuf, length);
 	}
 
-	/* If TX interrupt is enabled, do not proceed here */
-	if (!(USART1->CR1 & USART_CR1_TXFEIE))
-	{
-		// Enable FIFO empty interrupt --> auto write remaining data from interrupt
-		LL_USART_EnableIT_TXFE(USART1);
-	}
+	/* Enable FIFO empty interrupt --> auto write remaining data from interrupt */
+	LL_USART_EnableIT_TXFE(USART1);
 
 	return true;
 }
@@ -289,18 +269,8 @@ void USART1_IRQHandler(void)
 		/* Clear flag IDLE */
 		SET_BIT(USART1->ICR, USART_ICR_IDLECF);
 
-		/* Read all in buffer FIFO */
-		// uint8_t count = 0;
-		// uint8_t c = 0;
-		// while(USART1->ISR & USART_ISR_RXNE_RXFNE)
-		// {
-		// 	count++;
-		// 	c = USART1->RDR;
-		// 	(void)c;
-		// }
-
-		uint32_t numberOfByteRead = RX_BUFFER_SIZE - LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_1);
-		(void)numberOfByteRead;
+		uint32_t numberOfBytesRead = RX_BUFFER_SIZE - LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_1);
+		(void)numberOfBytesRead;
 
 		/* Reload DMA */
 		LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_1);
@@ -311,6 +281,7 @@ void USART1_IRQHandler(void)
 	/* Transmit */
 	if (LL_USART_IsActiveFlag_TXFE(USART1))
 	{/* TXFE: TXFIFO empty */
+		
 		TransmitRemainingData();
 	}
 	

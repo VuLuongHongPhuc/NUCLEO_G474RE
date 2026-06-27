@@ -1,4 +1,3 @@
-# https://embedded-dbl.com/visual-studio-code-for-arm-with-cmake-3-toolchain-cmake/
 cmake_minimum_required(VERSION 3.23.1)
 
 # Optional: print out extra messages to see what is going on. Comment it to have less verbose messages
@@ -53,6 +52,8 @@ set(PROJECT_SOURCES
 
 # Add an executable to the project
 add_executable(${EXECUTABLE} ${PROJECT_SOURCES})
+
+# Link libraries to project
 target_link_libraries(${EXECUTABLE} PRIVATE 
         lld_lib
         freertos_kernel_lib
