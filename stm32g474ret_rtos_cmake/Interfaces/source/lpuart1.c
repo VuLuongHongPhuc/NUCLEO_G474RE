@@ -23,7 +23,7 @@
 /********************************* Macros *****************************************/
 #define INTERRUPT_ENABLED	1
 
-#define FIFO_SIZE                8U
+#define LPUART_FIFO_SIZE         8U     /* STM32G474 can hold only max 8 bytes on FIFO buffer */
 
 #define LPUART1_INT_PRIORITY	 7U
 
@@ -45,9 +45,6 @@ StaticStreamBuffer_t pxStaticStreamBuffer;
 /********************************* Local prototypes *******************************/
 static inline void InitializeGPIO(void);
 static inline void InitializeLPUART(uint32_t pclk1_frequency);
-
-//void LPUART1_IRQHandler(void);
-//void DMA1_Channel2_IRQHandler();
 
 /********************************* Implementations ********************************/
 
@@ -274,12 +271,11 @@ Stream_t * LPUART1_GetRxStream(void)
 // p.1704 RM0440 LPUART interrupts
 void LPUART1_IRQHandler(void)
 {	
-	uint8_t data[9];
+	uint8_t data[LPUART_FIFO_SIZE+1];
 	size_t xReceivedBytes;
 	size_t i;
 
 	BaseType_t xHigherPriorityTaskWoken = pdFALSE;  /* Initialised to pdFALSE. */
-	
 
 	/* Receive */
 	if (LPUART1->ISR & USART_ISR_RXNE_RXFNE)
@@ -294,15 +290,12 @@ void LPUART1_IRQHandler(void)
 	// CR3.TXFTIE = 1 --> TX threshold trigger
 	//if (LPUART1->ISR & USART_ISR_TXFT) {}
 
-	// Transmit data register empty/TXFIFO not full
-	//if (LPUART1->ISR & USART_ISR_TXE) {}
-
 	/* Transmit */
 	if (LPUART1->ISR & USART_ISR_TXFE)
 	{/* TXFE: TXFIFO empty */
 		xReceivedBytes = xStreamBufferReceiveFromISR(_xStreamBuffer,
 			                                         &data,
-													 FIFO_SIZE,
+													 LPUART_FIFO_SIZE,
 													 &xHigherPriorityTaskWoken );
 		if (xReceivedBytes > 0)
 		{
@@ -339,6 +332,7 @@ void LPUART1_IRQHandler(void)
 		portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
+#if 0
 void DMA1_Channel2_IRQHandler()
 {
 	/* Transfer complete */
@@ -357,6 +351,7 @@ void DMA1_Channel2_IRQHandler()
 		DMA1->IFCR |= LL_DMA_IFCR_CTEIF2;
 	}
 }
+#endif
 
 void LPUART1_TestTransmit(void)
 {

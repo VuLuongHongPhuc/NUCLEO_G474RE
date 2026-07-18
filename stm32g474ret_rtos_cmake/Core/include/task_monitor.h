@@ -28,7 +28,7 @@ typedef struct
 
 /********************************* API function prototype *************************/
 
-void MonitorTask(void* pv_parameters);
+void MonitorTask(void* pParameters);
 
 
 #ifdef __cplusplus

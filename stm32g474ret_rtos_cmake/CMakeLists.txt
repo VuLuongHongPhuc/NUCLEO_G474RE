@@ -12,7 +12,7 @@ set(EXECUTABLE ${PROJECT_NAME}.elf)
 set(LINKER_FILE ${CMAKE_SOURCE_DIR}/STM32G474RETX.ld)
 
 enable_language(C CXX ASM)
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 14)
@@ -36,10 +36,8 @@ add_subdirectory(Interfaces)
 
 
 # Add the source file to the project
-# and set the variable PROJECT_SOURCES to this source file
-set(PROJECT_SOURCES
-        ${UTILS_SRC}
-        ${INTERFACES_SRC}
+# and set the variable CORE_SRC to this source file
+set(CORE_SRC
         Core/main.c
         Core/stm32g4xx_startup.c
         Core/syscalls.c
@@ -51,7 +49,7 @@ set(PROJECT_SOURCES
     )
 
 # Add an executable to the project
-add_executable(${EXECUTABLE} ${PROJECT_SOURCES})
+add_executable(${EXECUTABLE} ${CORE_SRC} ${UTILS_SRC} ${INTERFACES_SRC})
 
 # Link libraries to project
 target_link_libraries(${EXECUTABLE} PRIVATE 
@@ -126,8 +124,8 @@ target_compile_options(${EXECUTABLE} PRIVATE
 # Explanation of some options:
 # -u 
 # _printf_float -> enable float support in printf (functionality increases code size)
-#                     use of this option requires --specs=rdimon.specs
-#                     call syscalls.c to provide semihosting support functions
+#                  use of this option requires --specs=rdimon.specs
+#                  call syscalls.c to provide semihosting support functions
 # --specs=rdimon.specs -> enable semihosting support
 # --specs=nano.specs -> use newlib-nano (smaller C library implementation)
 # --specs=nosys.specs -> use minimal system calls (no OS)

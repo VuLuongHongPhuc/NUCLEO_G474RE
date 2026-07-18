@@ -30,6 +30,7 @@
 #include "watchdog.h"
 #include "gpio.h"
 #include "usart1.h"
+#include "fdcan1.h"
 
 
 /********************************* Constants definition ***************************/
@@ -61,11 +62,6 @@ int main(void)
     SYSTEM_Initialize();
 
 	LL_RCC_GetSystemClocksFreq(&clock_ref);/* Get clock */
-	GPIO_Initialize();	
-	USART1_Initialize(&clock_ref.PCLK2_Frequency);
-    LPUART1_Initialize(clock_ref.PCLK1_Frequency);
-	//WATCHDOG_Initialize();
-
 	
 	/* DEBUG - clocks frequencies */
 	printf("SYSTEM frequencies:\r\n");
@@ -73,6 +69,13 @@ int main(void)
 	printf(" - HCLK  : %d\r\n", (int)clock_ref.HCLK_Frequency);
 	printf(" - PCLK1 : %d\r\n", (int)clock_ref.PCLK1_Frequency);
 	printf(" - PCLK2 : %d\r\n", (int)clock_ref.PCLK2_Frequency);
+
+
+	GPIO_Initialize();
+	USART1_Initialize(&clock_ref.PCLK2_Frequency);
+    LPUART1_Initialize(clock_ref.PCLK1_Frequency);
+    FDCAN1_Initialize();
+	//WATCHDOG_Initialize();
 
 
 	CreateTask();	

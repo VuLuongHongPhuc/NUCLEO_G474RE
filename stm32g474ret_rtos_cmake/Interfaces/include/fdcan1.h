@@ -6,28 +6,37 @@
  * @date Nov 13, 2025
  */
 
-#ifndef DRV_CAN_H_
-#define DRV_CAN_H_
+#ifndef __FDCAN1_H_
+#define __FDCAN_H_
 
 /* p.44 table of content / p.1938 FDCAN */
 
 /********************************* Includes ***************************************/
+
+#include "fdcan_common.h"
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /********************************* Constants definition ***************************/
+
 /********************************* Macros definition ******************************/
+
 /********************************* Types definition *******************************/
-/********************************* Global variable ********************************/
+
+/********************************* Public variable ********************************/
+
 /********************************* API functions prototype ************************/
 
-void CAN_Initialize(void);
+void FDCAN1_Initialize(void);
+
+bool FDCAN1_GetMessage(FDCAN_RxHeaderTypeDef * pRxHeader, uint8_t * pRxData);
 
 #ifdef __cplusplus
 }
 #endif
 
 
-#endif /* DRV_CAN_H_ */
+#endif /* __FDCAN1_H_ */

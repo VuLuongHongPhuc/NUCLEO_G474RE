@@ -18,6 +18,8 @@ Board NUCLEO-G474RE
 | BTN_USER     | PC13     |  2         |
 | USART1_TX    | PC4      | 22         |
 | USART1_RX    | PC5      | 23         |
+| FDCAN1_RX    | PA11     | 45         |
+| FDCAN1_TX    | PA12     | 46         |
 
 ## DMA
 | NAME         | Channel x | Assign to  |

@@ -47,6 +47,7 @@ static inline void InitializeGPIO(void);
 static inline void InitializeDMA(void);
 static inline void InitializeInterrupt(void);
 static inline void TransmitRemainingData(void);
+static inline void ReloadDma(void);
 
 /********************************* Implementations ********************************/
 
@@ -260,6 +261,12 @@ bool USART1_Write(const uint8_t * const pBuf, uint16_t length)
 	return true;
 }
 
+static inline void ReloadDma(void)
+{
+	LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_1);
+	LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_1, RX_BUFFER_SIZE);
+	LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_1);
+}
 
 void USART1_IRQHandler(void)
 {
@@ -272,10 +279,7 @@ void USART1_IRQHandler(void)
 		uint32_t numberOfBytesRead = RX_BUFFER_SIZE - LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_1);
 		(void)numberOfBytesRead;
 
-		/* Reload DMA */
-		LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_1);
-		LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_1, RX_BUFFER_SIZE);
-		LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_1);
+		ReloadDma();
 	}
 
 	/* Transmit */
@@ -313,10 +317,8 @@ void DMA1_Channel1_IRQHandler(void)
 {
 	/* Transfer complete */
 	if (DMA1->ISR & LL_DMA_ISR_TCIF1)
-	{
-		LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_1);
-		LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_1, RX_BUFFER_SIZE);
-		LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_1);
+	{		
+		ReloadDma();
 
 		DMA1->IFCR |= LL_DMA_IFCR_CTCIF1;
 	}

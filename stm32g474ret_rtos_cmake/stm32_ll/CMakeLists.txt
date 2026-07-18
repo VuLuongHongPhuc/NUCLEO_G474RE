@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.23.1)
 
-set(STM32_ll_LIB_NAME    "lld_lib")
+set(STM32_ll_LIB_NAME "lld_lib")
 
 file(GLOB_RECURSE LLD_SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/source/*.c")
 

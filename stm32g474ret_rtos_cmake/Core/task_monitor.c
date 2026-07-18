@@ -14,7 +14,7 @@
 #include "task_monitor.h"
 #include "lpuart1.h"
 #include "convert_to_string.h"
-#include <stream_buffer.h>
+//#include <stream_buffer.h>
 
 /********************************* Constants definition ***************************/
 
@@ -28,57 +28,60 @@
 
 /********************************* API functions **********************************/
 
-void MonitorTask(void* pv_parameters)
+void MonitorTask(void* pParameters)
 {    
-    TaskMonitor_param_t* p_task_param = NULL;
-    TaskHandle_t task_handle;
-    UBaseType_t free_stack;
-    uint8_t task_id = 0;
+    TaskMonitor_param_t* pTaskParam = NULL;
+    TaskHandle_t taskHandle;
+    UBaseType_t freeStack;
+    uint8_t taskId = 0;
     size_t i;
     char str[configMAX_TASK_NAME_LEN + 1];
-    char * p_task_name;
-    bool end_car;
+    char * pTaskName;
+    bool bEndCaracter;
     
-    p_task_param = (TaskMonitor_param_t*) pv_parameters;
+    pTaskParam = (TaskMonitor_param_t*) pParameters;
+
+   
 
     while(1)
     {
-        vTaskDelay(1000);
+        vTaskDelay(500);
 
-        task_handle = p_task_param->p_task_handle[task_id++];
+        taskHandle = pTaskParam->p_task_handle[taskId++];
         
-        if (task_id == TSK_ID_MAX)
+        if (taskId == TSK_ID_MAX)
         {
-            task_id = 0;
+            taskId = 0;
         }
 
-        free_stack = uxTaskGetStackHighWaterMark(task_handle);
+        freeStack = uxTaskGetStackHighWaterMark(taskHandle);
 
         /* Task Name */
-        end_car = false;
-        p_task_name = pcTaskGetName(task_handle);
+        bEndCaracter = false;
+        pTaskName = pcTaskGetName(taskHandle);
         for(i=0; i<configMAX_TASK_NAME_LEN; i++)
         {
-            if (end_car)
+            if (bEndCaracter)
             {
                 str[i] = 0x20; /* space */
             }
             else
             {
-                str[i] = *p_task_name++;
+                str[i] = *pTaskName++;
             }
             
             if (str[i] == '\0')
             {
                 str[i] = 0x20;
-                end_car = true;
+                bEndCaracter = true;
             }
         }
         LPUART1_Write((uint8_t*)str, configMAX_TASK_NAME_LEN);
 
         /* Stack free space left */
-        (void)u32toa((uint32_t)free_stack, str);
+        (void)u32toa((uint32_t)freeStack, str);
         LPUART1_Write((uint8_t*)str, 11);
+
     }
 }
 

@@ -11,6 +11,7 @@
 #include "task_main.h"
 #include "gpio.h"
 #include "usart1.h"
+#include "fdcan1.h"
 
 /********************************* Constants definition ***************************/
 
@@ -30,17 +31,19 @@ void MainTask(void* pv_parameters)
     //TaskMain_param_t* p_task_param = NULL;
     //p_task_param = (TaskMain_param_t*) pv_parameters;
 
+
     while(1)
     {
         vTaskDelay(1000);
 
         LL_GPIO_TogglePin(BUILT_IN_LED_Port, BUILT_IN_LED_Pin);
 
-        #if 1
+        #if 0
         uint8_t buf[3] = { 0x33, 0x22, 0x11 };
         USART1_Write(buf, 3);
         #endif
     }
 }
+
 
 /*EOF*/

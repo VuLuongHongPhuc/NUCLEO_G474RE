@@ -11,6 +11,8 @@
 #include <map>
 
 
+#define DEF_MONITOR_VIEW 1      // View freeRTOS monitor result
+
 #define TTL_COM_PORT "COM9"
 //#define TTL_COM_PORT "\\\\.\\COMx"
 
@@ -30,7 +32,7 @@ int main()
         return EXIT_SUCCESS;
     }
 
-    std::thread t([&] {
+    std::thread t([&]() {
 
         do
         {
@@ -159,17 +161,35 @@ void Read(HANDLE handle)
     
     std::ostringstream oss;
 
-    //oss << std::setw(2) << std::hex << std::setfill('0');
-    oss << "R: ";
+    
+    #if (DEF_MONITOR_VIEW==1)
+        oss << "R: ";
 
-    for (int i = 0; i < numberOfBytesRead; i++)
-    {
-        if (buf[i] == '\0')
-            break;
-            
-        oss << static_cast<char>(buf[i]);
-    }
+        for (int i = 0; i < numberOfBytesRead; i++)
+        {
+            if (buf[i] == '\0')
+                break;
+                
+            oss << static_cast<char>(buf[i]);
+        }
+    #else
+        oss << std::setw(2) << std::hex << std::setfill('0');
+        oss << "R: ";
 
+        for (int i = 0; i < numberOfBytesRead; i++)
+        {
+            if (buf[i] < 0x10)
+            {
+                oss << "0x0" << static_cast<int>(buf[i]);
+            }
+            else
+            {
+                oss << "0x" << static_cast<int>(buf[i]);
+            }
+                
+        }
+    #endif
+    
     std::cout << oss.str() << '\n';
 }
 

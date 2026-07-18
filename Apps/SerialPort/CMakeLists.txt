@@ -7,7 +7,7 @@ project(TestCode)
 enable_language(C CXX)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set compiler options
@@ -21,7 +21,7 @@ set(PROJECT_SOURCES
         main.cpp
     )
 
-# List of includ directories
+# List of include directories
 #target_include_directories(${PROJECT_NAME} PRIVATE       #src        #inc        )
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
