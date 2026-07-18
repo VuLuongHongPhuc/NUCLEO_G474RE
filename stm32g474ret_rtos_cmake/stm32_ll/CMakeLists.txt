@@ -23,6 +23,7 @@ target_compile_options(${STM32_ll_LIB_NAME} PRIVATE
         $<$<COMPILE_LANGUAGE:C>:-O2>
         $<$<COMPILE_LANGUAGE:C>:-ffunction-sections>
         $<$<COMPILE_LANGUAGE:C>:-fdata-sections>
+        $<$<COMPILE_LANGUAGE:C>:-Wl,--gc-sections>
         $<$<COMPILE_LANGUAGE:C>:-Wall>
         $<$<COMPILE_LANGUAGE:C>:-fstack-usage>
         $<$<COMPILE_LANGUAGE:C>:--specs=nano.specs>

@@ -26,6 +26,7 @@ add_subdirectory(FreeRTOS-Kernel)
 add_subdirectory(stm32_ll)
 add_subdirectory(Utils)
 add_subdirectory(Interfaces)
+add_subdirectory(Crypto)
 
 # Alternative add freeRTOS lib
 #add_library(freertos_kernel_lib STATIC IMPORTED)
@@ -55,6 +56,7 @@ add_executable(${EXECUTABLE} ${CORE_SRC} ${UTILS_SRC} ${INTERFACES_SRC})
 target_link_libraries(${EXECUTABLE} PRIVATE 
         lld_lib
         freertos_kernel_lib
+        crypto_aes_lib
         )
 
 # List of compiler defines, prefix with -D compiler option
@@ -94,6 +96,7 @@ target_compile_options(${EXECUTABLE} PRIVATE
         $<$<COMPILE_LANGUAGE:C>:-O0>
         $<$<COMPILE_LANGUAGE:C>:-ffunction-sections>
         $<$<COMPILE_LANGUAGE:C>:-fdata-sections>
+        $<$<COMPILE_LANGUAGE:C>:-Wl,--gc-sections>
         $<$<COMPILE_LANGUAGE:C>:-Wall>
         $<$<COMPILE_LANGUAGE:C>:-fstack-usage>
 #        $<$<COMPILE_LANGUAGE:C>:-fcyclomatic-complexity>
@@ -112,6 +115,7 @@ target_compile_options(${EXECUTABLE} PRIVATE
         $<$<COMPILE_LANGUAGE:CXX>:-O0>
         $<$<COMPILE_LANGUAGE:CXX>:-ffunction-sections>
         $<$<COMPILE_LANGUAGE:CXX>:-fdata-sections>
+        $<$<COMPILE_LANGUAGE:C>:-Wl,--gc-sections>
         $<$<COMPILE_LANGUAGE:CXX>:-Wall>
         $<$<COMPILE_LANGUAGE:CXX>:-fstack-usage>
         $<$<COMPILE_LANGUAGE:CXX>:--specs=nano.specs>

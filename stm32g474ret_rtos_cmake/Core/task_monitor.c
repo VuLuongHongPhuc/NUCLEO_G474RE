@@ -14,9 +14,11 @@
 #include "task_monitor.h"
 #include "lpuart1.h"
 #include "convert_to_string.h"
-//#include <stream_buffer.h>
+
 
 /********************************* Constants definition ***************************/
+
+#define MONITOR_THREAD_STACK   1
 
 /********************************* Macros definition ******************************/
 
@@ -30,7 +32,9 @@
 
 void MonitorTask(void* pParameters)
 {    
+#if (MONITOR_THREAD_STACK == 1)
     TaskMonitor_param_t* pTaskParam = NULL;
+
     TaskHandle_t taskHandle;
     UBaseType_t freeStack;
     uint8_t taskId = 0;
@@ -40,13 +44,20 @@ void MonitorTask(void* pParameters)
     bool bEndCaracter;
     
     pTaskParam = (TaskMonitor_param_t*) pParameters;
+#endif
 
-   
+    
+
+    
 
     while(1)
     {
-        vTaskDelay(500);
+        
+        
+        vTaskDelay(1000);
 
+        
+#if (MONITOR_THREAD_STACK == 1)
         taskHandle = pTaskParam->p_task_handle[taskId++];
         
         if (taskId == TSK_ID_MAX)
@@ -81,7 +92,7 @@ void MonitorTask(void* pParameters)
         /* Stack free space left */
         (void)u32toa((uint32_t)freeStack, str);
         LPUART1_Write((uint8_t*)str, 11);
-
+#endif
     }
 }
 

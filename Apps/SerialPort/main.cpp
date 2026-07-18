@@ -11,7 +11,7 @@
 #include <map>
 
 
-#define DEF_MONITOR_VIEW 1      // View freeRTOS monitor result
+#define DEF_MONITOR_VIEW       0      // View freeRTOS monitor result
 
 #define TTL_COM_PORT "COM9"
 //#define TTL_COM_PORT "\\\\.\\COMx"
@@ -174,19 +174,23 @@ void Read(HANDLE handle)
         }
     #else
         oss << std::setw(2) << std::hex << std::setfill('0');
-        oss << "R: ";
+        oss << "R:";
 
         for (int i = 0; i < numberOfBytesRead; i++)
         {
             if (buf[i] < 0x10)
             {
-                oss << "0x0" << static_cast<int>(buf[i]);
+                oss << " 0x0" << static_cast<int>(buf[i]);
             }
             else
             {
-                oss << "0x" << static_cast<int>(buf[i]);
+                oss << " 0x" << static_cast<int>(buf[i]);
             }
-                
+
+            if ((i != 0) && (i%16 == 0))
+            {
+                oss << '\n';
+            }
         }
     #endif
     

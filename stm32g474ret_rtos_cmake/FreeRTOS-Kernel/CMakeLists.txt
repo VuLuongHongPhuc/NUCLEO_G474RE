@@ -18,6 +18,7 @@ target_compile_options(${FREERTOS_KERNEL_LIB_NAME} PRIVATE
     $<$<COMPILE_LANGUAGE:C>:-O0>
     $<$<COMPILE_LANGUAGE:C>:-ffunction-sections>
     $<$<COMPILE_LANGUAGE:C>:-fdata-sections>
+    $<$<COMPILE_LANGUAGE:C>:-Wl,--gc-sections>
     $<$<COMPILE_LANGUAGE:C>:-Wall>
     $<$<COMPILE_LANGUAGE:C>:-Wextra>
     $<$<COMPILE_LANGUAGE:C>:-Wpedantic>
