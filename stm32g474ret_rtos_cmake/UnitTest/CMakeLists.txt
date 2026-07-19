@@ -38,6 +38,11 @@ add_executable(unit_tests
     ${TEST_SRC}
     ${PROJECT_SRC})
 
+target_compile_options(unit_tests PRIVATE
+    -DUNIT_TEST
+    -Wall
+    -Wextra
+)
 
 target_link_libraries(unit_tests PRIVATE
     GTest::gtest
