@@ -26,3 +26,7 @@ Board NUCLEO-G474RE
 |--------------|-----------|------------|
 | DMA1         | channel 1 | USART1_RX  |
 
+## LIBRARIES
+- freeRTOS Kernel V11.3.0
+- tiny-AES-c https://github.com/kokke/tiny-AES-c?utm_source=chatgpt.com
+- stm32 LL STM32Cube_FW_G4_V1.5.1

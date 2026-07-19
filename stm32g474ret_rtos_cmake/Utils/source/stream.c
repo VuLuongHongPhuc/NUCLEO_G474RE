@@ -2,15 +2,38 @@
  * stream.c
  *
  *  Created on: Dec 10, 2024
- *      Author: admin
+ *      Author: Phuc VU
  */
+
+
+/********************************* Includes ***************************************/
 
 #include "stream.h"
 
+/********************************* Constants definition ***************************/
 
-static uint8_t _errorCode = 0;
+/********************************* Macros definition ******************************/
 
+/********************************* Types definition *******************************/
 
+/********************************* Private variable *******************************/
+
+static uint8_t _errorCode;
+
+/********************************* API functions **********************************/
+
+uint8_t STREAM_GetLastError(void)
+{
+    return _errorCode;
+}
+
+/**
+ * @brief Initialize a data stream
+ *
+ * @param pStream - Pointer stream to initialize
+ * @param pBuffer - Pointer to buffer store the stream data
+ * @param size - size of the buffer in bytes
+ */
 void STREAM_Initialize(Stream_t * pStream, uint8_t * pBuffer, uint16_t size)
 {
     if(!pStream || !pBuffer)
@@ -29,15 +52,13 @@ void STREAM_Initialize(Stream_t * pStream, uint8_t * pBuffer, uint16_t size)
     pStream->write = pBuffer;
 }
 
-void STREAM_Flush(Stream_t* pStream)
+void STREAM_Flush(Stream_t * pStream)
 {
     if(!pStream)
     {
         _errorCode = STREAM_ERROR_NULL_POINTER;
         return;
     }
-
-    _errorCode = STREAM_NO_ERROR;
 
     pStream->read = pStream->buffer;
     pStream->write = pStream->buffer;
@@ -50,8 +71,6 @@ bool STREAM_IsEmpty(Stream_t const * const pStream)
         _errorCode = STREAM_ERROR_NULL_POINTER;
         return false;
     }
-
-    _errorCode = STREAM_NO_ERROR;
 
     if( pStream->write == pStream->read )
     {
@@ -70,8 +89,6 @@ bool STREAM_Write(Stream_t * const pStream, const uint8_t* pBuf, uint16_t length
         _errorCode = STREAM_ERROR_NULL_POINTER;
         return false;
     }
-
-    _errorCode = STREAM_NO_ERROR;
 
     while (length!=0)
     {
@@ -114,8 +131,6 @@ uint16_t STREAM_Read(Stream_t * const pStream, uint8_t * pBuf, uint16_t length)
         return 0;
     }
 
-    _errorCode = STREAM_NO_ERROR;
-
     uint16_t count = 0;
     while ((length != 0) && (pStream->read != pStream->write))
     {
@@ -155,8 +170,6 @@ uint16_t STREAM_Look(Stream_t const * const pStream, uint16_t offset, uint8_t * 
         return 0;
     }
 
-    _errorCode = STREAM_NO_ERROR;
-    
     const uint16_t stream_data_size = STREAM_Length(pStream);
     uint16_t absolute_offset;
     uint16_t count = 0;

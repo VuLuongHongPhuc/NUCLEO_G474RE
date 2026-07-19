@@ -45,15 +45,10 @@ void MonitorTask(void* pParameters)
     
     pTaskParam = (TaskMonitor_param_t*) pParameters;
 #endif
-
-    
-
     
 
     while(1)
     {
-        
-        
         vTaskDelay(1000);
 
         
