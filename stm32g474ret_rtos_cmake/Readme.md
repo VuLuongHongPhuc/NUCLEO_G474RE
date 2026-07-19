@@ -30,3 +30,27 @@ Board NUCLEO-G474RE
 - freeRTOS Kernel V11.3.0
 - tiny-AES-c https://github.com/kokke/tiny-AES-c?utm_source=chatgpt.com
 - stm32 LL STM32Cube_FW_G4_V1.5.1
+
+## WSL ubuntu dev
+### Install ARM compiler
+```text
+sudo apt update
+sudo apt install gcc-arm-none-eabi binutils-arm-none-eabi gdb-multiarch
+```
+- check version
+```text
+arm-none-eabi-gcc --version
+```
+- This provides:
+<pre>
+arm-none-eabi-gcc — C compiler
+arm-none-eabi-g++ — C++ compiler
+arm-none-eabi-as — assembler
+arm-none-eabi-ld — linker
+arm-none-eabi-objcopy — binary/hex generation
+arm-none-eabi-gdb — debugger
+</pre>
+### Install build tools
+```text
+sudo apt install build-essential cmake ninja-build make git
+```

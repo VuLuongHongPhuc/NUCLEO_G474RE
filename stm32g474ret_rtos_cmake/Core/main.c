@@ -98,7 +98,7 @@ static void CreateTask(void)
 	_taskHandle[TSK_ID_MAIN] = xTaskCreateStatic( MainTask,         /* Function that implements the task. */
                                 (const char * const) TSK_NAME_MAIN, /* Text name for the task. */
                                 TSK_STACKSIZE_MAIN,                 /* Number of indexes in the xStack array. */
-                                (void * const) &_param_task_main,    /* Parameter passed into the task. */
+                                (void * const) &_param_task_main,   /* Parameter passed into the task. */
                                 TSK_PRIORITY_MAIN,                  /* Priority at which the task is created. */
                                 xMainTaskStack,                     /* Array to use as the task's stack. */
                                 &xMainTaskBuffer);                  /* Variable to hold the task's data structure. */
@@ -118,7 +118,7 @@ static void CreateTask(void)
 	_taskHandle[TSK_ID_HOST] = xTaskCreateStatic( HostTask,         /* Function that implements the task. */
                                 (const char * const) TSK_NAME_HOST, /* Text name for the task. */
                                 TSK_STACKSIZE_HOST,                 /* Number of indexes in the xStack array. */
-                                (void * const) &_param_task_host,    /* Parameter passed into the task. */
+                                (void * const) &_param_task_host,   /* Parameter passed into the task. */
                                 TSK_PRIORITY_HOST,                  /* Priority at which the task is created. */
                                 xHostTaskStack,                     /* Array to use as the task's stack. */
                                 &xHostTaskBuffer);                  /* Variable to hold the task's data structure. */
@@ -135,10 +135,10 @@ static void CreateTask(void)
     _param_task_monitor.task_id = TSK_ID_MONITOR;
 	_param_task_monitor.p_task_handle = _taskHandle;
 
-	_taskHandle[TSK_ID_MONITOR] = xTaskCreateStatic( MonitorTask,         /* Function that implements the task. */
+	_taskHandle[TSK_ID_MONITOR] = xTaskCreateStatic( MonitorTask,      /* Function that implements the task. */
                                 (const char * const) TSK_NAME_MONITOR, /* Text name for the task. */
                                 TSK_STACKSIZE_MONITOR,                 /* Number of indexes in the xStack array. */
-                                (void * const) &_param_task_monitor,    /* Parameter passed into the task. */
+                                (void * const) &_param_task_monitor,   /* Parameter passed into the task. */
                                 TSK_PRIORITY_MONITOR,                  /* Priority at which the task is created. */
                                 xMonitorTaskStack,                     /* Array to use as the task's stack. */
                                 &xMonitorTaskBuffer);                  /* Variable to hold the task's data structure. */

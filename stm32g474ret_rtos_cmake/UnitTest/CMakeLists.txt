@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 
-set(CMAKE_C_COMPILER "gcc.exe")
-set(CMAKE_CXX_COMPILER "g++.exe")
+#set(CMAKE_C_COMPILER "gcc.exe")
+#set(CMAKE_CXX_COMPILER "g++.exe")
 
-project(MyUnitTestProject LANGUAGES C CXX)
+project(unit_tests)
 
+enable_language(C CXX)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 17)
@@ -34,19 +35,19 @@ file(GLOB_RECURSE TEST_SRC "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp")
 
 
 # Test executable
-add_executable(unit_tests
+add_executable(${PROJECT_NAME}
     ${TEST_SRC}
     ${PROJECT_SRC})
 
-target_compile_options(unit_tests PRIVATE
+target_compile_options(${PROJECT_NAME} PRIVATE
     -DUNIT_TEST
     -Wall
     -Wextra
 )
 
-target_link_libraries(unit_tests PRIVATE
+target_link_libraries(${PROJECT_NAME} PRIVATE
     GTest::gtest
     GTest::gtest_main)
 
 include(GoogleTest)
-gtest_discover_tests(unit_tests)
+gtest_discover_tests(${PROJECT_NAME})
